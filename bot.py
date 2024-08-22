@@ -18,7 +18,6 @@ class Menu:
             {"name": "Десерты", "text": "Выберите десерт", "callback": "desserts", "parent_menu": "menu", "order": 5},
         ]
         self.user_states = {}  # Словарь для хранения состояния пользователя
-        self.last_message_ids = {}  # Словарь для хранения ID последних сообщений по каждому пользователю
 
     def create_menu_keyboard(self, parent_callback):
         # Создание клавиатуры для текущего уровня меню
@@ -54,18 +53,6 @@ class Menu:
                 return item['parent_menu']
         return None
 
-    def delete_last_message(self, chat_id):
-        if chat_id in self.last_message_ids:
-            message_id = self.last_message_ids[chat_id]
-            try:
-                bot.delete_message(chat_id, message_id)
-            except telebot.apihelper.ApiTelegramException as e:
-                print(f"Error deleting message: {e}")  # Логирование ошибки для отладки
-            except Exception as e:
-                print(f"Unexpected error: {e}")  # Логирование неожиданных ошибок
-            else:
-                del self.last_message_ids[chat_id]  # Удаление записи только в случае успешного удаления
-
 
 # Токен вашего бота
 bot = telebot.TeleBot(TELEGRAM_API_TOKEN)
@@ -77,9 +64,9 @@ menu = Menu()
 # Обработчик команды /start
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    # Удаление предыдущего сообщения, если оно есть
-    menu.delete_last_message(message.chat.id)
-
+    # Удаление предыдущего сообщения
+    if message.text:
+        bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
     # Отправка основного меню
     main_menu = menu.create_menu_keyboard(None)
     with open('img/main_photo.jpg', 'rb') as photo:

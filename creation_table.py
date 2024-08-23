@@ -1,6 +1,6 @@
 import sqlite3
 
-conn = sqlite3.connect('food_ordering_sistem.db')
+conn = sqlite3.connect('data/food_ordering_sistem.db')
 cur = conn.cursor()
 
 # Создание таблицы для меню

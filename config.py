@@ -13,4 +13,3 @@ PAYMENT_API_KEY = os.getenv('PAYMENT_API_KEY')
 # Пример использования
 if not TELEGRAM_API_TOKEN:
     raise ValueError("No BOT_TOKEN set for application")
-

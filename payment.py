@@ -39,7 +39,7 @@ def cash_payment(call):
     # Обновление статуса заказа в базе данных
     cursor.execute("SELECT total_amount FROM orders WHERE user_id=?", (chat_id,))
     total_price = cursor.fetchone()[0]
-    cursor.execute("UPDATE orders SET status='оформлен' WHERE user_id=?", (chat_id,))
+    cursor.execute("UPDATE orders SET status='Оформлен' WHERE user_id=?", (chat_id,))
     conn.commit()
 
     # Сообщение пользователю

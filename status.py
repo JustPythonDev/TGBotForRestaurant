@@ -27,3 +27,4 @@ def check_order_status(message):
 
 # Запуск бота
 bot.polling()
+

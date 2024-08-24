@@ -1,6 +1,8 @@
 import telebot
 from telebot import types
-from config import TELEGRAM_API_TOKEN, DATABASE_NAME
+from config import TELEGRAM_API_TOKEN
+from db_library import Database, MenuItem
+import os
 
 class Menu:
     def __init__(self):
@@ -80,15 +82,15 @@ menu = Menu()
 # Обработчик команды /start
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    # Удаление предыдущего сообщения
-    if message.text:
-        bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
     # Отправка основного меню
     main_menu = menu.create_menu_keyboard(None)
     with open('img/main_photo.jpg', 'rb') as photo:
         bot.send_photo(message.chat.id, photo,
                                     caption="Добро пожаловать в наше кафе! Выберите действие:",
                                     reply_markup=main_menu)
+    # Удаление предыдущего сообщения
+    if message.text:
+        bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 
 
 # Обработчик нажатий на inline-кнопки
@@ -102,36 +104,55 @@ def handle_callback(call):
 
     if call.data.startswith("back_to_"):
         parent_callback = call.data[len("back_to_"):]
-        main_menu = menu.create_menu_keyboard(parent_callback)
-        menu.user_states[user_id] = parent_callback  # Обновление состояния пользователя
-        menu_text = menu.get_menu_text(parent_callback)
-        image_url = menu.get_image_url(parent_callback)
-
-        bot.delete_message(chat_id=user_id, message_id=call.message.message_id)
-
-        if image_url:
-            with open(image_url, 'rb') as photo:
-                bot.send_photo(user_id, photo,
-                                caption=menu_text,
-                                reply_markup=main_menu)
-        else:
-            bot.send_message(user_id, text=menu_text, reply_markup=main_menu)
 
     else:
-        menu.user_states[user_id] = call.data  # Сохранение состояния текущего меню
-        sub_menu = menu.create_menu_keyboard(call.data)
-        menu_text = menu.get_menu_text(call.data)
-        image_url = menu.get_image_url(call.data)
+        parent_callback = call.data
 
-        if sub_menu.keyboard:
+    # menu.user_states[user_id] = parent_callback  # Обновление состояния пользователя
+    menu_keys = menu.create_menu_keyboard(parent_callback)
+    menu_text = menu.get_menu_text(parent_callback)
+    image_url = menu.get_image_url(parent_callback)
+
+    if not os.path.isfile(image_url):
+        image_url = None
+
+    # Если есть изображение в сообщении и есть изображение для меню - редактируем изображение
+    if call.message.photo:
+        if image_url:
+            bot.edit_message_media(
+                media=types.InputMediaPhoto(media=image_url, caption=menu_text),
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                reply_markup=menu_keys
+            )
+        elif call.message.text:
+            bot.edit_message_text(text=menu_text,
+                              chat_id=user_id,
+                              message_id=call.message.message_id,
+                              reply_markup=menu_keys)
+        else:
+            bot.send_message(user_id, text=menu_text, reply_markup=menu_keys)
+
+        bot.delete_message(chat_id=user_id, message_id=call.message.message_id)
+    elif image_url:
+        with open(image_url, 'rb') as photo:
+            bot.send_photo(
+                user_id,
+                photo,
+                caption=menu_text,
+                reply_markup=menu_keys
+            )
+
+        if call.message.text:
             bot.delete_message(chat_id=user_id, message_id=call.message.message_id)
-            if image_url:
-                with open(image_url, 'rb') as photo:
-                    bot.send_photo(user_id, photo,
-                                    caption=menu_text,
-                                    reply_markup=sub_menu)
-            else:
-                bot.send_message(user_id, text=menu_text, reply_markup=sub_menu)
+    elif call.message.text:
+        # Если картинки нет, просто редактируем текст
+        bot.edit_message_text(text=menu_text,
+                              chat_id=user_id,
+                              message_id=call.message.message_id,
+                              reply_markup=menu_keys)
+    else:
+        bot.send_message(user_id, text=menu_text, reply_markup=menu_keys)
 
 
 bot.polling()

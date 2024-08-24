@@ -1,6 +1,7 @@
 import sqlite3
+from config import DATABASE_NAME
 
-conn = sqlite3.connect('data/food_ordering_sistem.db')
+conn = sqlite3.connect(DATABASE_NAME)
 cur = conn.cursor()
 
 # Создание таблицы для меню
@@ -86,11 +87,12 @@ cur.executemany("""
 INSERT INTO menu_items (name, text, callback, parent_menu, order_by, image_url)
 VALUES (?, ?, ?, ?, ?, ?)
 """, [
-    ('Меню кафе', 'Выберите категорию блюда', 'menu', None, 1, 'img/menu.jpg'),
-    ('Корзина', 'Выбранные вами блюда', 'cart', None, 2, 'img/cart.jpg'),
-    ('Оплата заказа', 'Выберите способ оплаты', 'payment', None, 3, 'img/payment.jpg'),
-    ('Статус заказа', 'Выберите заказ для просмотра', 'status', None, 4, 'img/status.jpg'),
-    ('Отзывы', 'Выберите категорию отзыва', 'feedback', None, 5, 'img/feedback.jpg'),
+    ('Главное меню', 'Добро пожаловать в наше кафе! Выберите действие:', 'start', None, 1, 'img/main_photo.jpg'),
+    ('Меню кафе', 'Выберите категорию блюда', 'menu', 'start', 1, 'img/menu.jpg'),
+    ('Корзина', 'Выбранные вами блюда', 'cart', 'start', 2, 'img/cart.jpg'),
+    ('Оплата заказа', 'Выберите способ оплаты', 'payment', 'start', 3, 'img/payment.jpg'),
+    ('Статус заказа', 'Выберите заказ для просмотра', 'status', 'start', 4, 'img/status.jpg'),
+    ('Отзывы', 'Выберите категорию отзыва', 'feedback', 'start', 5, 'img/feedback.jpg'),
     ('Закуски', 'Выберите закуску', 'appetizers', 'menu', 1, 'img/appetizers.jpg'),
     ('Салаты', 'Выберите салат', 'salads', 'menu', 2, 'img/salads.jpg'),
     ('Первые блюда', 'Выберите суп', 'soups', 'menu', 3, 'img/soups.jpg'),

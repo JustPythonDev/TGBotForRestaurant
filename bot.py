@@ -17,6 +17,7 @@ class Menu:
 
         # Получение элементов меню из базы данных
         filtered_menu = MenuItem.get_menu_items_by_parent(self.session, parent_callback)
+        self.db.close()
 
         for item in filtered_menu:
             button = types.InlineKeyboardButton(item["name"], callback_data=item["callback"])
@@ -24,7 +25,8 @@ class Menu:
 
         # Если это не главное меню, добавляем кнопку для возврата
         if parent_callback is not None and parent_callback != "start":
-            parent_of_parent = self.get_parent_menu_callback(parent_callback)
+            parent_of_parent = self.item(parent_callback)['parent_menu']
+            self.db.close()
             if parent_of_parent is None:
                 parent_of_parent = "start"
             back_button = types.InlineKeyboardButton("Назад", callback_data="back_to_" + parent_of_parent)
@@ -32,27 +34,13 @@ class Menu:
 
         return markup
 
-    def get_menu_text(self, callback):
+    def item(self, callback):
         # Получение текста для меню на основе callback
         item = MenuItem.get_menu_item_data(self.session, callback)
+        self.db.close()
         if item:
-            return item['text']
+            return item
         return None
-
-    def get_image_url(self, callback):
-        # Получение URL изображения для меню на основе callback
-        item = MenuItem.get_menu_item_data(self.session, callback)
-        if item:
-            return item['image_url']
-        return None
-
-    def get_parent_menu_callback(self, callback):
-        # Получение родительского меню на основе значения callback
-        item = MenuItem.get_menu_item_data(self.session, callback)
-        if item:
-            return item['parent_menu']
-        return None
-
 
 # Токен вашего бота
 bot = telebot.TeleBot(TELEGRAM_API_TOKEN)
@@ -69,8 +57,8 @@ def process_menu(user_id, parent_callback, msg=None):
         menu.last_menu = parent_callback
 
     menu_keys = menu.create_menu_keyboard(parent_callback)
-    menu_text = menu.get_menu_text(parent_callback)
-    image_url = menu.get_image_url(parent_callback)
+    menu_text = menu.item(parent_callback)['text']   # menu.get_menu_text(parent_callback)
+    image_url = menu.item(parent_callback)['image_url']   # menu.get_image_url(parent_callback)
 
     # Проверяем, если image_url указан и файл существует
     if image_url and os.path.isfile(image_url):
@@ -142,6 +130,5 @@ def handle_callback(call):
     parent_callback = call.data[len("back_to_"): ] if call.data.startswith("back_to_") else call.data
     # Вызываем process_menu для обработки inline-кнопок
     process_menu(user_id, parent_callback, msg=call.message)
-
 
 bot.polling()

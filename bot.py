@@ -51,14 +51,14 @@ menu = Menu()
 
 def process_menu(user_id, parent_callback, msg=None):
     # Создание клавиатуры и получение текста и изображения
-    if parent_callback == menu.last_menu:
+    if parent_callback == menu.last_menu and parent_callback != 'start':
         return
     else:
         menu.last_menu = parent_callback
 
     menu_keys = menu.create_menu_keyboard(parent_callback)
-    menu_text = menu.item(parent_callback)['text']   # menu.get_menu_text(parent_callback)
-    image_url = menu.item(parent_callback)['image_url']   # menu.get_image_url(parent_callback)
+    menu_text = menu.item(parent_callback)['text']
+    image_url = menu.item(parent_callback)['image_url']
 
     # Проверяем, если image_url указан и файл существует
     if image_url and os.path.isfile(image_url):

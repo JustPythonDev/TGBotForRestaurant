@@ -39,7 +39,7 @@ cur.execute("""
     price REAL NOT NULL,
     image_url TEXT,
     dishes_category_id INTEGER,
-    FOREIGN KEY (menu_id) REFERENCES dishes_categories(id)
+    FOREIGN KEY (dishes_category_id) REFERENCES dishes_categories(id)
     )
 """)
 

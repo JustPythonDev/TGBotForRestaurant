@@ -37,7 +37,7 @@ class Menu:
             self.db.close()
             if parent_of_parent is None:
                 parent_of_parent = "start"
-            back_button = types.InlineKeyboardButton("Назад", callback_data="back_to_" + parent_of_parent)
+            back_button = types.InlineKeyboardButton("↩️ Назад", callback_data="back_to_" + parent_of_parent)
             markup.add(back_button)
 
         return markup

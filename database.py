@@ -1,17 +1,30 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, Text
-from sqlalchemy.orm import relationship, sessionmaker, declarative_base
-from config import DATABASE_NAME  # Импортируете путь к базе данных
+from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, Text, DateTime, CheckConstraint
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship, sessionmaker
+from config import DATABASE_NAME  # Импортируем путь к базе данных из config.py
 
 # Базовый класс для декларативных классов
 Base = declarative_base()
 
-# Определение классов для таблиц
-class Menu(Base):
-    __tablename__ = 'menu'
+class MenuItems(Base):
+    __tablename__ = 'menu_items'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, nullable=False)
+    text = Column(Text, nullable=True)
+    image_url = Column(String, nullable=True)
+    callback = Column(String, unique=True, nullable=False)
+    parent_menu = Column(String, ForeignKey('menu_items.callback'), nullable=True)
+    order_by = Column(Integer, nullable=False)
+
+    children = relationship("MenuItems", backref="parent", remote_side=[callback])
+
+class DishesCategories(Base):
+    __tablename__ = 'dishes_categories'
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
+    menu_item_callback = Column(String, ForeignKey('menu_items.callback'))
 
-    dishes = relationship("Dishes", back_populates="menu")
+    menu_item = relationship("MenuItems", backref="dishes_categories")
 
 class Dishes(Base):
     __tablename__ = 'dishes'
@@ -20,9 +33,9 @@ class Dishes(Base):
     description = Column(Text)
     price = Column(Float, nullable=False)
     image_url = Column(String)
-    menu_id = Column(Integer, ForeignKey('menu.id'))
+    dishes_category_id = Column(Integer, ForeignKey('dishes_categories.id'))
 
-    menu = relationship("Menu", back_populates="dishes")
+    category = relationship("DishesCategories", backref="dishes")
     cart_items = relationship("Cart", back_populates="dish")
     reviews = relationship("Reviews", back_populates="dish")
 
@@ -49,8 +62,8 @@ class Reviews(Base):
     user_id = Column(Integer)
     dish_id = Column(Integer, ForeignKey('dishes.id'))
     review_text = Column(Text)
-    rating = Column(Integer)
-    review_date = Column(String, nullable=False)
+    rating = Column(Integer, CheckConstraint('rating >= 1 AND rating <= 5'), nullable=False)
+    review_date = Column(DateTime, nullable=False)
 
     dish = relationship("Dishes", back_populates="reviews")
 
@@ -60,7 +73,7 @@ class Users(Base):
     telegram_user_id = Column(Integer, unique=True, nullable=False)
 
 # Настройка подключения к базе данных
-engine = create_engine(f'sqlite:///{DATABASE_NAME}')  # Использование переменной DATABASE_NAME
+engine = create_engine(f'sqlite:///{DATABASE_NAME}')
 
 # Создание всех таблиц в базе данных
 Base.metadata.create_all(engine)

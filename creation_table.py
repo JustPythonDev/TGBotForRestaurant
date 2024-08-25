@@ -4,17 +4,9 @@ from config import DATABASE_NAME
 conn = sqlite3.connect(DATABASE_NAME)
 cur = conn.cursor()
 
-# Создание таблицы для меню
-cur.execute("""
-    CREATE TABLE menu (
-    id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL
-    )
-""")
-
 # Создание таблицы для блюд
 cur.execute("""
-    CREATE TABLE dishes (
+    CREATE TABLE if not exists dishes (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
@@ -27,7 +19,7 @@ cur.execute("""
 
 # Создание таблицы для текущих заказов пользователей (корзина)
 cur.execute("""
-    CREATE TABLE cart (
+    CREATE TABLE if not exists cart (
     user_id INTEGER,
     dish_id INTEGER,
     quantity INTEGER NOT NULL,
@@ -37,7 +29,7 @@ cur.execute("""
 
 # Создание таблицы для заказов
 cur.execute("""
-    CREATE TABLE orders (
+    CREATE TABLE if not exists orders (
     id INTEGER PRIMARY KEY,
     user_id INTEGER,
     total_amount REAL NOT NULL,
@@ -49,31 +41,32 @@ cur.execute("""
 
 # Создание таблицы для отзывов
 cur.execute("""
-    CREATE TABLE reviews (
+    CREATE TABLE if not exists reviews (
     id INTEGER PRIMARY KEY,
     user_id INTEGER,
     dish_id INTEGER,
-    review_text TEXT,
-    rating INTEGER,
-    review_date TEXT NOT NULL,
+    review_text TEXT,    
+    rating INTEGER CHECK(rating >= 1 AND rating <= 5),
+    review_date DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     FOREIGN KEY (dish_id) REFERENCES dishes(id)
     )
 """)
 
 # Создание таблицы для пользователей
 cur.execute("""
-    CREATE TABLE users (
+    CREATE TABLE if not exists users (
     id INTEGER PRIMARY KEY,
     telegram_user_id INTEGER NOT NULL UNIQUE
     )
 """)
 
 # Создаем таблицу menu_items
+cur.execute("DROP TABLE if exists menu_items")
 cur.execute("""
 CREATE TABLE menu_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    text TEXT NOT NULL,
+    text TEXT NULL,
     image_url TEXT,
     callback TEXT UNIQUE NOT NULL,
     parent_menu TEXT,
@@ -82,9 +75,18 @@ CREATE TABLE menu_items (
 );
 """)
 
-# Вставляем данные в таблицу menu_items
-# cur.execute("DELETE * FROM menu_items")
+# Создание таблицы для категорий меню
+cur.execute("""DROP TABLE if exists menu""")
 
+cur.execute("""
+    CREATE TABLE menu (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    menu_item_callback TEXT REFERENCES menu_items(callback)
+    )
+""")
+
+# Вставляем данные в таблицу menu_items
 cur.executemany("""
 INSERT INTO menu_items (name, text, callback, parent_menu, order_by, image_url)
 VALUES (?, ?, ?, ?, ?, ?)
@@ -100,8 +102,25 @@ VALUES (?, ?, ?, ?, ?, ?)
     ('Первые блюда', 'Выберите суп', 'soups', 'menu', 3, 'img/soups.jpg'),
     ('Основные блюда', 'Выберите горячее', 'main_dishes', 'menu', 4, 'img/main_dishes.jpg'),
     ('Десерты', 'Выберите десерт', 'desserts', 'menu', 5, 'img/desserts.jpg'),
-    ('Оставить отзыв', None, 'set_review', 'feedback', 5, None),
-    ('Просмотреть отзывы', '', 'view_reviews', 'feedback', 5, None)
+    ('Напитки', 'Выберите напиток', 'drinks', 'menu', 6, None),
+    ('Оставить отзыв', None, 'set_review', 'feedback', 1, None),
+    ('Просмотреть отзывы', '', 'view_reviews', 'feedback', 2, None)
+])
+
+
+# Вставляем данные в таблицу menu
+# cur.execute("DELETE * FROM menu")
+
+cur.executemany("""
+INSERT INTO menu (name, menu_item_callback)
+VALUES (?, ?)
+""", [
+    ('Закуски', 'appetizers'),
+    ('Салаты', 'salads'),
+    ('Первые блюда', 'soups'),
+    ('Основные блюда', 'main_dishes'),
+    ('Десерты', 'desserts'),
+    ('Напитки', 'drinks')
 ])
 
 # Сохраняем изменения

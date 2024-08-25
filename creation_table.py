@@ -12,8 +12,8 @@ cur.execute("""
     description TEXT,
     price REAL NOT NULL,
     image_url TEXT,
-    menu_id INTEGER,
-    FOREIGN KEY (menu_id) REFERENCES menu(id)
+    dishes_category_id INTEGER,
+    FOREIGN KEY (menu_id) REFERENCES dishes_categories(id)
     )
 """)
 
@@ -76,10 +76,10 @@ CREATE TABLE menu_items (
 """)
 
 # Создание таблицы для категорий меню
-cur.execute("""DROP TABLE if exists menu""")
+cur.execute("""DROP TABLE if exists dishes_categories """)
 
 cur.execute("""
-    CREATE TABLE menu (
+    CREATE TABLE dishes_categories (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
     menu_item_callback TEXT REFERENCES menu_items(callback)
@@ -112,7 +112,7 @@ VALUES (?, ?, ?, ?, ?, ?)
 # cur.execute("DELETE * FROM menu")
 
 cur.executemany("""
-INSERT INTO menu (name, menu_item_callback)
+INSERT INTO dishes_categories (name, menu_item_callback)
 VALUES (?, ?)
 """, [
     ('Закуски', 'appetizers'),

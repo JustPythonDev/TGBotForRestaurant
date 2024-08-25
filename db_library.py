@@ -74,7 +74,8 @@ if __name__ == "__main__":
 
 
     # Получение элемента по значению callback
-    item = MenuItem.get_menu_item_data(session, "menu")
+    # item = MenuItem.get_menu_item_data(session, "menu")
+    item = MenuItem.get_menu_items_by_parent(session, "menu")
     print(item)
 
     # Закрытие сессии

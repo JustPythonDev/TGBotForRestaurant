@@ -83,6 +83,8 @@ CREATE TABLE menu_items (
 """)
 
 # Вставляем данные в таблицу menu_items
+# cur.execute("DELETE * FROM menu_items")
+
 cur.executemany("""
 INSERT INTO menu_items (name, text, callback, parent_menu, order_by, image_url)
 VALUES (?, ?, ?, ?, ?, ?)
@@ -98,6 +100,8 @@ VALUES (?, ?, ?, ?, ?, ?)
     ('Первые блюда', 'Выберите суп', 'soups', 'menu', 3, 'img/soups.jpg'),
     ('Основные блюда', 'Выберите горячее', 'main_dishes', 'menu', 4, 'img/main_dishes.jpg'),
     ('Десерты', 'Выберите десерт', 'desserts', 'menu', 5, 'img/desserts.jpg'),
+    ('Оставить отзыв', None, 'set_review', 'feedback', 5, None),
+    ('Просмотреть отзывы', '', 'view_reviews', 'feedback', 5, None)
 ])
 
 # Сохраняем изменения

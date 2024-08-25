@@ -4,6 +4,32 @@ from config import DATABASE_NAME
 conn = sqlite3.connect(DATABASE_NAME)
 cur = conn.cursor()
 
+# Создаем таблицу menu_items - пункты меню
+cur.execute("DROP TABLE if exists menu_items")
+cur.execute("""
+CREATE TABLE menu_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    text TEXT NULL,
+    image_url TEXT,
+    callback TEXT UNIQUE NOT NULL,
+    parent_menu TEXT,
+    order_by INTEGER NOT NULL,
+    FOREIGN KEY (parent_menu) REFERENCES menu_items(callback)
+);
+""")
+
+
+# Создание таблицы для категорий блюд
+cur.execute("""DROP TABLE if exists dishes_categories """)
+cur.execute("""
+    CREATE TABLE dishes_categories (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    menu_item_callback TEXT REFERENCES menu_items(callback)
+    )
+""")
+
 # Создание таблицы для блюд
 cur.execute("""
     CREATE TABLE if not exists dishes (
@@ -60,31 +86,6 @@ cur.execute("""
     )
 """)
 
-# Создаем таблицу menu_items
-cur.execute("DROP TABLE if exists menu_items")
-cur.execute("""
-CREATE TABLE menu_items (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    text TEXT NULL,
-    image_url TEXT,
-    callback TEXT UNIQUE NOT NULL,
-    parent_menu TEXT,
-    order_by INTEGER NOT NULL,
-    FOREIGN KEY (parent_menu) REFERENCES menu_items(callback)
-);
-""")
-
-# Создание таблицы для категорий меню
-cur.execute("""DROP TABLE if exists dishes_categories """)
-
-cur.execute("""
-    CREATE TABLE dishes_categories (
-    id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL,
-    menu_item_callback TEXT REFERENCES menu_items(callback)
-    )
-""")
 
 # Вставляем данные в таблицу menu_items
 cur.executemany("""

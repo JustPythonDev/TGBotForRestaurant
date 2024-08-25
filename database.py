@@ -119,6 +119,13 @@ def update_order_payment_status(order_id, new_status):
 def get_order_status(order_id):
     return session.query(Orders).filter_by(id=order_id).first()
 
+def get_dishes_by_category(category_name):
+    category = session.query(DishesCategories).filter_by(name=category_name).first()
+    if category:
+        return session.query(Dishes).filter_by(dishes_category_id=category.id).all()
+    return []
+
+
 def add_feedback(user_id, dish_id, review_text, rating, review_date):
     new_review = Reviews(
         user_id=user_id,

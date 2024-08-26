@@ -25,7 +25,7 @@ VALUES (?, ?, ?, ?, ?, ?)
     ('Первые блюда', 'Выберите суп', 'soups', 'menu', 3, 'img/soups.jpg'),
     ('Основные блюда', 'Выберите горячее', 'main_dishes', 'menu', 4, 'img/main_dishes.jpg'),
     ('Десерты', 'Выберите десерт', 'desserts', 'menu', 5, 'img/desserts.jpg'),
-    ('Напитки', 'Выберите напиток', 'drinks', 'menu', 6, None),
+    ('Напитки', 'Выберите напиток', 'drinks', 'menu', 6, 'img/drinks.jpg'),
 
     ('Оставить отзыв', 'Напишите ваш отзыв', 'set_review', 'feedback', 1, None),
     ('Просмотреть отзывы', 'Последние отзывы', 'view_reviews', 'feedback', 2, None)

@@ -89,15 +89,16 @@ def process_menu(parent_callback, msg=None):
     menu_keys = menu.create_menu_keyboard(parent_callback)
     menu_text = menu.item(parent_callback)['text']
     image_url = menu.item(parent_callback)['image_url']
+    user_id = msg.chat.id
 
-    send_new_msg(menu_text, menu_keys, image_url, msg)
+    send_or_change_menu_msg(user_id, menu_text, menu_keys, image_url, msg)
 
     if menu.item(parent_callback)['parent_menu'] == 'menu':
         print(parent_callback)
-        view_menu_category_dishes(parent_callback, msg.chat.id)
+        view_category_dishes_menu(parent_callback, user_id)
 
 
-def send_new_msg(menu_text, menu_keys=None, image_url=None, old_msg=None):
+def send_or_change_menu_msg(user_id, menu_text, menu_keys=None, image_url=None, old_msg=None):
     user_id = old_msg.chat.id
     if image_url and os.path.isfile(image_url):
         image_media = types.InputMediaPhoto(media=open(image_url, 'rb'), caption=menu_text)
@@ -115,12 +116,10 @@ def send_new_msg(menu_text, menu_keys=None, image_url=None, old_msg=None):
                     reply_markup=menu_keys
                 )
             else:
-                bot.delete_message(chat_id=user_id, message_id=old_msg.message_id)
                 bot.send_message(user_id, text=menu_text, reply_markup=menu_keys)
+                bot.delete_message(chat_id=user_id, message_id=old_msg.message_id)
 
-           # bot.delete_message(chat_id=user_id, message_id=old_msg.message_id)
         elif image_media:
-            bot.delete_message(chat_id=user_id, message_id=old_msg.message_id)
             with open(image_url, 'rb') as photo:
                 bot.send_photo(
                     user_id,
@@ -128,6 +127,7 @@ def send_new_msg(menu_text, menu_keys=None, image_url=None, old_msg=None):
                     caption=menu_text,
                     reply_markup=menu_keys
                 )
+            bot.delete_message(chat_id=user_id, message_id=old_msg.message_id)
         elif old_msg.text:
             # Если картинки нет, просто редактируем текст
             bot.edit_message_text(text=menu_text,
@@ -135,8 +135,8 @@ def send_new_msg(menu_text, menu_keys=None, image_url=None, old_msg=None):
                                   message_id=old_msg.message_id,
                                   reply_markup=menu_keys)
         else:
-            bot.delete_message(chat_id=user_id, message_id=old_msg.message_id)
             bot.send_message(user_id, text=menu_text, reply_markup=menu_keys)
+            bot.delete_message(chat_id=user_id, message_id=old_msg.message_id)
     else:
         if image_media:
             bot.send_photo(
@@ -149,11 +149,6 @@ def send_new_msg(menu_text, menu_keys=None, image_url=None, old_msg=None):
             bot.send_message(user_id, text=menu_text, reply_markup=menu_keys)
 
 
-# def save_message_id(user_id, message_id):
-#     """Сохраняет ID сообщения, отправленного ботом."""
-#     if user_id not in sent_messages:
-#         sent_messages[user_id] = []
-#     sent_messages[user_id].append(message_id)
 def save_message_id(user_id, message_id, id):
     """Сохраняет ID сообщения, отправленного ботом, с привязкой к идентификатору."""
 
@@ -165,18 +160,6 @@ def save_message_id(user_id, message_id, id):
     sent_messages[user_id][message_id] = id
 
 
-# def clear_chat_history(user_id):
-#     """Удаляет все сообщения, отправленные ботом в данном чате."""
-#     if user_id in sent_messages:
-#         for message_id in sent_messages[user_id]:
-#             try:
-#                 bot.delete_message(user_id, message_id)
-#                 time.sleep(0.1)  # Задержка, чтобы избежать лимитов API
-#             except Exception as e:
-#                 print(f"Не удалось удалить сообщение {message_id}: {e}")
-#
-#         # Очистка списка сообщений после их удаления
-#         sent_messages[user_id] = []
 def clear_chat_history(user_id):
     """Удаляет все сообщения, отправленные ботом в данном чате."""
     if user_id in sent_messages:
@@ -194,38 +177,45 @@ def clear_chat_history(user_id):
         sent_messages[user_id] = {}
 
 
-def view_menu_category_dishes(parent_callback, user_id):
+def send_new_message(user_id, image_url, msg_text, markup_keys=None, id=None):
+    """Отправка сообщения - только текст или текст/картинка + markup_keysб
+    Сохраняет ID сообщения, отправленного ботом, с привязкой к идентификатору"""
+    try:
+        with open(image_url, 'rb') as photo:
+            msg = bot.send_photo(
+                user_id,
+                photo,
+                caption=msg_text,
+                reply_markup=markup_keys)
+        save_message_id(user_id, msg.message_id, id)
+    except (TypeError, FileNotFoundError):
+        msg = bot.send_message(
+            user_id,
+            text=msg_text,
+            reply_markup=markup_keys
+        )
+        save_message_id(user_id, msg.message_id, id)
+
+
+def view_category_dishes_menu(parent_callback, user_id):
     # Получаем список блюд из временной базы данных
     dishes_list = temp_db.get_dishes_by_menu_callback(parent_callback)
 
     # Если список блюд пуст, отправляем сообщение об этом
     if not dishes_list:
-        # bot.send_message(user_id, text="Блюда в данной категории отсутствуют.")
         return
 
     for dish in dishes_list:
         # Создаем разметку с кнопкой для каждого изображения
         markup = types.InlineKeyboardMarkup()
-        button = types.InlineKeyboardButton(text=f"Заказать {dish['name']}", callback_data=f"order_{dish['id']}")
+        button = types.InlineKeyboardButton(text=f"Выбрать", callback_data=f"order_{dish['id']}")
         markup.add(button)
 
         # Отправляем изображение с подписью и кнопкой
         dish_message = f"<b>{dish['name']}</b>\nЦена: {dish['price']} руб."
-        try:
-            with open(dish['image_url'], 'rb') as photo:
-                msg = bot.send_photo(
-                    user_id,
-                    photo,
-                    caption=dish_message,
-                    reply_markup=markup)
-            save_message_id(user_id, msg.message_id, dish['id'])
-        except (TypeError, FileNotFoundError):
-            msg = bot.send_message(
-                user_id,
-                text=dish_message,
-                reply_markup=markup
-            )
-            save_message_id(user_id, msg.message_id, dish['id'])
+
+        # отправим собщение в бот
+        send_new_message(user_id, dish['image_url'], dish_message, markup, dish['id'])
 
 
 bot.polling()

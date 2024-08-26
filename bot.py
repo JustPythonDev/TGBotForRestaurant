@@ -114,16 +114,13 @@ def send_new_msg(menu_text, menu_keys=None, image_url=None, old_msg=None):
                     message_id=old_msg.message_id,
                     reply_markup=menu_keys
                 )
-            elif old_msg.text:
-                bot.edit_message_text(text=menu_text,
-                                      chat_id=user_id,
-                                      message_id=old_msg.message_id,
-                                      reply_markup=menu_keys)
             else:
+                bot.delete_message(chat_id=user_id, message_id=old_msg.message_id)
                 bot.send_message(user_id, text=menu_text, reply_markup=menu_keys)
 
            # bot.delete_message(chat_id=user_id, message_id=old_msg.message_id)
         elif image_media:
+            bot.delete_message(chat_id=user_id, message_id=old_msg.message_id)
             with open(image_url, 'rb') as photo:
                 bot.send_photo(
                     user_id,
@@ -131,9 +128,6 @@ def send_new_msg(menu_text, menu_keys=None, image_url=None, old_msg=None):
                     caption=menu_text,
                     reply_markup=menu_keys
                 )
-
-            if old_msg.text:
-                bot.delete_message(chat_id=user_id, message_id=old_msg.message_id)
         elif old_msg.text:
             # Если картинки нет, просто редактируем текст
             bot.edit_message_text(text=menu_text,
@@ -141,6 +135,7 @@ def send_new_msg(menu_text, menu_keys=None, image_url=None, old_msg=None):
                                   message_id=old_msg.message_id,
                                   reply_markup=menu_keys)
         else:
+            bot.delete_message(chat_id=user_id, message_id=old_msg.message_id)
             bot.send_message(user_id, text=menu_text, reply_markup=menu_keys)
     else:
         if image_media:
@@ -154,25 +149,49 @@ def send_new_msg(menu_text, menu_keys=None, image_url=None, old_msg=None):
             bot.send_message(user_id, text=menu_text, reply_markup=menu_keys)
 
 
-def save_message_id(user_id, message_id):
-    """Сохраняет ID сообщения, отправленного ботом."""
+# def save_message_id(user_id, message_id):
+#     """Сохраняет ID сообщения, отправленного ботом."""
+#     if user_id not in sent_messages:
+#         sent_messages[user_id] = []
+#     sent_messages[user_id].append(message_id)
+def save_message_id(user_id, message_id, id):
+    """Сохраняет ID сообщения, отправленного ботом, с привязкой к идентификатору."""
+
+    # Проверяем, есть ли уже записи для данного пользователя
     if user_id not in sent_messages:
-        sent_messages[user_id] = []
-    sent_messages[user_id].append(message_id)
+        sent_messages[user_id] = {}  # Инициализируем словарь для конкретного пользователя
+
+    # Сохраняем id под конкретным message_id
+    sent_messages[user_id][message_id] = id
 
 
+# def clear_chat_history(user_id):
+#     """Удаляет все сообщения, отправленные ботом в данном чате."""
+#     if user_id in sent_messages:
+#         for message_id in sent_messages[user_id]:
+#             try:
+#                 bot.delete_message(user_id, message_id)
+#                 time.sleep(0.1)  # Задержка, чтобы избежать лимитов API
+#             except Exception as e:
+#                 print(f"Не удалось удалить сообщение {message_id}: {e}")
+#
+#         # Очистка списка сообщений после их удаления
+#         sent_messages[user_id] = []
 def clear_chat_history(user_id):
     """Удаляет все сообщения, отправленные ботом в данном чате."""
     if user_id in sent_messages:
-        for message_id in sent_messages[user_id]:
+        # Получаем список message_id для удаления
+        message_ids = list(sent_messages[user_id].keys())
+
+        for message_id in message_ids:
             try:
                 bot.delete_message(user_id, message_id)
-                time.sleep(0.1)  # Задержка, чтобы избежать лимитов API
+                time.sleep(0.05)  # Задержка, чтобы избежать лимитов API
             except Exception as e:
                 print(f"Не удалось удалить сообщение {message_id}: {e}")
 
-        # Очистка списка сообщений после их удаления
-        sent_messages[user_id] = []
+        # Очистка словаря сообщений после их удаления
+        sent_messages[user_id] = {}
 
 
 def view_menu_category_dishes(parent_callback, user_id):
@@ -199,13 +218,14 @@ def view_menu_category_dishes(parent_callback, user_id):
                     photo,
                     caption=dish_message,
                     reply_markup=markup)
+            save_message_id(user_id, msg.message_id, dish['id'])
         except (TypeError, FileNotFoundError):
             msg = bot.send_message(
                 user_id,
                 text=dish_message,
                 reply_markup=markup
             )
-        save_message_id(user_id, msg.message_id)
+            save_message_id(user_id, msg.message_id, dish['id'])
 
 
 bot.polling()

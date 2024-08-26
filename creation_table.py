@@ -26,7 +26,7 @@ cur.execute("""
     CREATE TABLE dishes_categories (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
-    menu_item_callback TEXT REFERENCES menu_items(callback)
+    menu_item_callback TEXT UNIQUE REFERENCES menu_items(callback)
     )
 """)
 
@@ -78,13 +78,13 @@ cur.execute("""
     )
 """)
 
-# Создание таблицы для пользователей
-cur.execute("""
-    CREATE TABLE if not exists users (
-    id INTEGER PRIMARY KEY,
-    telegram_user_id INTEGER NOT NULL UNIQUE
-    )
-""")
+# # Создание таблицы для пользователей
+# cur.execute("""
+#     CREATE TABLE if not exists users (
+#     id INTEGER PRIMARY KEY,
+#     telegram_user_id INTEGER NOT NULL UNIQUE
+#     )
+# """)
 
 # Сохраняем изменения
 conn.commit()

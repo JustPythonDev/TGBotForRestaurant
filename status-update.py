@@ -1,7 +1,8 @@
+# Нужно добавить в таблицу Order поле 'status = Column(String, nullable=False)'
+
 import sqlite3
 import threading
 import time
-from datetime import datetime
 
 # Функция для подключения к базе данных SQLite
 def get_db_connection():
@@ -14,7 +15,7 @@ def get_current_status(order_id):
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('SELECT status FROM orders WHERE id = ?', (order_id,))
-    status = cursor.fetchone()['status']
+    status = cursor.fetchone()['status'] # Нужно добавить в таблицу это поле
     conn.close()
     return status
 
@@ -60,6 +61,9 @@ def process_order(order_id):
         return
     update_order_status(order_id, 'Доставлен')
 
-    # Запуск процесса обновления статусов заказа
+# Запуск процесса обновления статусов заказа
+def start_order_processing(order_id):
     threading.Thread(target=process_order, args=(order_id,)).start()
     print(f"Order {order_id} added and processing started.")
+
+

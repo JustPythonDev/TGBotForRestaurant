@@ -124,21 +124,6 @@ VALUES (?, ?)
     ('Напитки', 'drinks')
 ])
 
-# Добавление блюд в категорию "Закуски"
-# Сначала находим id категории "Закуски"
-cur.execute("SELECT id FROM dishes_categories WHERE name = ?", ('Закуски',))
-appetizers_category_id = cur.fetchone()[0]
-
-# Вставляем блюда в таблицу dishes
-cur.executemany("""
-INSERT INTO dishes (name, description, price, image_url, dishes_category_id)
-VALUES (?, ?, ?, ?, ?)
-""", [
-    ("Брускетта с томатами", "Хрустящий хлеб с нарезанными томатами и базиликом.", 150.0, "img/bruschetta.jpg", appetizers_category_id),
-    ("Оливки с чесноком", "Микс оливок и чеснока в оливковом масле.", 120.0, "img/olives.jpg", appetizers_category_id),
-    ("Креветки в кляре", "Жареные креветки в хрустящем кляре.", 200.0, "img/shrimp_tempura.jpg", appetizers_category_id)
-])
-
 # Сохраняем изменения
 conn.commit()
 conn.close()

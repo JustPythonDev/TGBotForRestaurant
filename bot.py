@@ -1,8 +1,16 @@
 import telebot
 from telebot import types
+import time
+import os
+
 from config import TELEGRAM_API_TOKEN
 from db_library import Database, MenuItem
-import os
+
+
+# ВРЕМЕННО!!!
+import temp_db
+
+sent_messages = {}
 
 class Menu:
     def __init__(self):
@@ -29,7 +37,7 @@ class Menu:
             self.db.close()
             if parent_of_parent is None:
                 parent_of_parent = "start"
-            back_button = types.InlineKeyboardButton("Назад", callback_data="back_to_" + parent_of_parent)
+            back_button = types.InlineKeyboardButton("↩️ Назад", callback_data="back_to_" + parent_of_parent)
             markup.add(back_button)
 
         return markup
@@ -42,15 +50,37 @@ class Menu:
             return item
         return None
 
+
 # Токен вашего бота
-bot = telebot.TeleBot(TELEGRAM_API_TOKEN)
+bot = telebot.TeleBot(TELEGRAM_API_TOKEN, parse_mode='HTML')
 
 # Создаем экземпляр класса Menu
 menu = Menu()
 
 
-def process_menu(user_id, parent_callback, msg=None):
-    # Создание клавиатуры и получение текста и изображения
+# Обработчик команды /start
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    process_menu("start", msg=message)
+
+
+# Обработчик нажатий на inline-кнопки
+@bot.callback_query_handler(func=lambda call: True)
+def handle_callback(call):
+    if call.data.startswith("back_to_"):
+        parent_callback = call.data[len("back_to_"):]
+        if parent_callback == "menu":
+            clear_chat_history(call.message.chat.id)
+    else:
+        parent_callback = call.data
+
+    if parent_callback.startswith("order_"):
+        pass
+    process_menu(parent_callback, msg=call.message)
+
+
+def process_menu(parent_callback, msg=None):
+    # Создание клавиатуры и получение текста и изображения:
     if parent_callback == menu.last_menu and parent_callback != 'start':
         return
     else:
@@ -60,32 +90,37 @@ def process_menu(user_id, parent_callback, msg=None):
     menu_text = menu.item(parent_callback)['text']
     image_url = menu.item(parent_callback)['image_url']
 
-    # Проверяем, если image_url указан и файл существует
+    send_new_msg(menu_text, menu_keys, image_url, msg)
+
+    if menu.item(parent_callback)['parent_menu'] == 'menu':
+        print(parent_callback)
+        view_menu_category_dishes(parent_callback, msg.chat.id)
+
+
+def send_new_msg(menu_text, menu_keys=None, image_url=None, old_msg=None):
+    user_id = old_msg.chat.id
     if image_url and os.path.isfile(image_url):
         image_media = types.InputMediaPhoto(media=open(image_url, 'rb'), caption=menu_text)
     else:
         image_media = None
 
     # Если есть изображение в сообщении и есть изображение для меню - редактируем изображение
-    if msg:
-        if msg.photo:
+    if old_msg:
+        if old_msg.photo:
             if image_media:
                 bot.edit_message_media(
                     media=image_media,
                     chat_id=user_id,
-                    message_id=msg.message_id,
+                    message_id=old_msg.message_id,
                     reply_markup=menu_keys
                 )
-            elif msg.text:
-                bot.edit_message_text(text=menu_text,
-                                      chat_id=user_id,
-                                      message_id=msg.message_id,
-                                      reply_markup=menu_keys)
             else:
+                bot.delete_message(chat_id=user_id, message_id=old_msg.message_id)
                 bot.send_message(user_id, text=menu_text, reply_markup=menu_keys)
 
-           # bot.delete_message(chat_id=user_id, message_id=msg.message_id)
+           # bot.delete_message(chat_id=user_id, message_id=old_msg.message_id)
         elif image_media:
+            bot.delete_message(chat_id=user_id, message_id=old_msg.message_id)
             with open(image_url, 'rb') as photo:
                 bot.send_photo(
                     user_id,
@@ -93,16 +128,14 @@ def process_menu(user_id, parent_callback, msg=None):
                     caption=menu_text,
                     reply_markup=menu_keys
                 )
-
-            if msg.text:
-                bot.delete_message(chat_id=user_id, message_id=msg.message_id)
-        elif msg.text:
+        elif old_msg.text:
             # Если картинки нет, просто редактируем текст
             bot.edit_message_text(text=menu_text,
                                   chat_id=user_id,
-                                  message_id=msg.message_id,
+                                  message_id=old_msg.message_id,
                                   reply_markup=menu_keys)
         else:
+            bot.delete_message(chat_id=user_id, message_id=old_msg.message_id)
             bot.send_message(user_id, text=menu_text, reply_markup=menu_keys)
     else:
         if image_media:
@@ -116,19 +149,83 @@ def process_menu(user_id, parent_callback, msg=None):
             bot.send_message(user_id, text=menu_text, reply_markup=menu_keys)
 
 
-# Обработчик команды /start
-@bot.message_handler(commands=['start'])
-def send_welcome(message):
-    user_id = message.chat.id
-    process_menu(user_id, "start", msg=message)
+# def save_message_id(user_id, message_id):
+#     """Сохраняет ID сообщения, отправленного ботом."""
+#     if user_id not in sent_messages:
+#         sent_messages[user_id] = []
+#     sent_messages[user_id].append(message_id)
+def save_message_id(user_id, message_id, id):
+    """Сохраняет ID сообщения, отправленного ботом, с привязкой к идентификатору."""
+
+    # Проверяем, есть ли уже записи для данного пользователя
+    if user_id not in sent_messages:
+        sent_messages[user_id] = {}  # Инициализируем словарь для конкретного пользователя
+
+    # Сохраняем id под конкретным message_id
+    sent_messages[user_id][message_id] = id
 
 
-# Обработчик нажатий на inline-кнопки
-@bot.callback_query_handler(func=lambda call: True)
-def handle_callback(call):
-    user_id = call.message.chat.id
-    parent_callback = call.data[len("back_to_"): ] if call.data.startswith("back_to_") else call.data
-    # Вызываем process_menu для обработки inline-кнопок
-    process_menu(user_id, parent_callback, msg=call.message)
+# def clear_chat_history(user_id):
+#     """Удаляет все сообщения, отправленные ботом в данном чате."""
+#     if user_id in sent_messages:
+#         for message_id in sent_messages[user_id]:
+#             try:
+#                 bot.delete_message(user_id, message_id)
+#                 time.sleep(0.1)  # Задержка, чтобы избежать лимитов API
+#             except Exception as e:
+#                 print(f"Не удалось удалить сообщение {message_id}: {e}")
+#
+#         # Очистка списка сообщений после их удаления
+#         sent_messages[user_id] = []
+def clear_chat_history(user_id):
+    """Удаляет все сообщения, отправленные ботом в данном чате."""
+    if user_id in sent_messages:
+        # Получаем список message_id для удаления
+        message_ids = list(sent_messages[user_id].keys())
+
+        for message_id in message_ids:
+            try:
+                bot.delete_message(user_id, message_id)
+                time.sleep(0.05)  # Задержка, чтобы избежать лимитов API
+            except Exception as e:
+                print(f"Не удалось удалить сообщение {message_id}: {e}")
+
+        # Очистка словаря сообщений после их удаления
+        sent_messages[user_id] = {}
+
+
+def view_menu_category_dishes(parent_callback, user_id):
+    # Получаем список блюд из временной базы данных
+    dishes_list = temp_db.get_dishes_by_menu_callback(parent_callback)
+
+    # Если список блюд пуст, отправляем сообщение об этом
+    if not dishes_list:
+        # bot.send_message(user_id, text="Блюда в данной категории отсутствуют.")
+        return
+
+    for dish in dishes_list:
+        # Создаем разметку с кнопкой для каждого изображения
+        markup = types.InlineKeyboardMarkup()
+        button = types.InlineKeyboardButton(text=f"Заказать {dish['name']}", callback_data=f"order_{dish['id']}")
+        markup.add(button)
+
+        # Отправляем изображение с подписью и кнопкой
+        dish_message = f"<b>{dish['name']}</b>\nЦена: {dish['price']} руб."
+        try:
+            with open(dish['image_url'], 'rb') as photo:
+                msg = bot.send_photo(
+                    user_id,
+                    photo,
+                    caption=dish_message,
+                    reply_markup=markup)
+            save_message_id(user_id, msg.message_id, dish['id'])
+        except (TypeError, FileNotFoundError):
+            msg = bot.send_message(
+                user_id,
+                text=dish_message,
+                reply_markup=markup
+            )
+            save_message_id(user_id, msg.message_id, dish['id'])
+
 
 bot.polling()

@@ -34,14 +34,15 @@ cur.execute("""
 cur.execute("""
     CREATE TABLE if not exists dishes (
     id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL,
+    name TEXT NOT NULL UNIQUE,
     description TEXT,
     price REAL NOT NULL,
     image_url TEXT,
-    dishes_category_id INTEGER,
-    FOREIGN KEY (dishes_category_id) REFERENCES dishes_categories(id)
+    dishes_category TEXT,
+    FOREIGN KEY (dishes_category) REFERENCES dishes_categories(menu_item_callback)
     )
 """)
+
 
 # Создание таблицы для текущих заказов пользователей (корзина)
 cur.execute("""

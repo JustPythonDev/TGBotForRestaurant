@@ -11,6 +11,7 @@ cur.execute("DELETE FROM menu_items")
 cur.executemany("""
 INSERT INTO menu_items (name, text, callback, parent_menu, order_by, image_url)
 VALUES (?, ?, ?, ?, ?, ?)
+ON CONFLICT(callback) DO NOTHING
 """, [
     ('Главное меню', 'Добро пожаловать в наше кафе!\nВыберите действие', 'start', None, 1, 'img/main_photo.jpg'),
 
@@ -31,9 +32,7 @@ VALUES (?, ?, ?, ?, ?, ?)
     ('Просмотреть отзывы', 'Последние отзывы', 'view_reviews', 'feedback', 2, None)
 ])
 
-
 # Вставляем данные в таблицу dishes_categories
-
 cur.executemany("""
 INSERT INTO dishes_categories (name, menu_item_callback)
 VALUES (?, ?)
@@ -45,6 +44,17 @@ ON CONFLICT(menu_item_callback) DO NOTHING
     ('Основные блюда', 'main_dishes'),
     ('Десерты', 'desserts'),
     ('Напитки', 'drinks')
+])
+
+
+cur.executemany("""
+INSERT INTO dishes (name, dishes_category, price, image_url)
+VALUES (?, ?, ?, ?)
+ON CONFLICT(name) DO NOTHING
+""", [
+    ('Брускетта с чесноком', 'appetizers', 230.0, 'img/ap_bruschetta.jpg'),
+    ('Оливки пряные', 'appetizers', 280.0, 'img/ap_olives.jpg'),
+    ('Креветки в темпуре', 'appetizers', 350.0, 'img/ap_shrimp_tempura.jpg')
 ])
 
 # Сохраняем изменения

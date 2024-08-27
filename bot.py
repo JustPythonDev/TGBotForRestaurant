@@ -14,9 +14,6 @@ sent_messages = {}
 
 class Menu:
     def __init__(self):
-        # Создаем экземпляр базы данных и получаем сессию
-        self.db = Database()
-        self.session = self.db.get_session()
         self.last_menu = ""
 
     def create_menu_keyboard(self, parent_callback):
@@ -24,8 +21,7 @@ class Menu:
         markup = types.InlineKeyboardMarkup()
 
         # Получение элементов меню из базы данных
-        filtered_menu = MenuItem.get_menu_items_by_parent(self.session, parent_callback)
-        self.db.close()
+        filtered_menu = MenuItem.get_menu_items_by_parent(parent_callback)
 
         for item in filtered_menu:
             button = types.InlineKeyboardButton(item["name"], callback_data=item["callback"])
@@ -34,7 +30,7 @@ class Menu:
         # Если это не главное меню, добавляем кнопку для возврата
         if parent_callback is not None and parent_callback != "start":
             parent_of_parent = self.item(parent_callback)['parent_menu']
-            self.db.close()
+
             if parent_of_parent is None:
                 parent_of_parent = "start"
             back_button = types.InlineKeyboardButton("↩️ Назад", callback_data="back_to_" + parent_of_parent)
@@ -44,8 +40,7 @@ class Menu:
 
     def item(self, callback):
         # Получение текста для меню на основе callback
-        item = MenuItem.get_menu_item_data(self.session, callback)
-        self.db.close()
+        item = MenuItem.get_menu_item_data(callback)
         if item:
             return item
         return None
@@ -99,7 +94,6 @@ def process_menu(parent_callback, msg=None):
 
 
 def send_or_change_menu_msg(user_id, menu_text, menu_keys=None, image_url=None, old_msg=None):
-    user_id = old_msg.chat.id
     if image_url and os.path.isfile(image_url):
         image_media = types.InputMediaPhoto(media=open(image_url, 'rb'), caption=menu_text)
     else:

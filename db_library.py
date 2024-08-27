@@ -1,5 +1,5 @@
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
-from sqlalchemy.orm import sessionmaker, scoped_session, declarative_base, Session
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Float, Text
+from sqlalchemy.orm import sessionmaker, scoped_session, declarative_base, Session, relationship
 from config import DATABASE_NAME
 
 # Базовый класс
@@ -14,13 +14,35 @@ class Database:
         self.SessionFactory = sessionmaker(bind=self.engine)
         self.Session = scoped_session(self.SessionFactory)
 
-    def get_session(self):
-        """Получение текущей сессии."""
+    def get_session(self) -> Session:
+        """Получение новой сессии."""
         return self.Session()
 
     def close(self):
-        """Закрытие текущей сессии."""
+        """Закрытие всех сессий."""
         self.Session.remove()
+
+
+# Экземпляр класса Database для использования в модуле
+db = Database()
+
+
+def with_session(func):
+    """Декоратор для управления сессией. Автоматически открывает и закрывает сессию."""
+
+    def wrapper(*args, **kwargs):
+        session = db.get_session()
+        try:
+            result = func(*args, session=session, **kwargs)
+            session.commit()
+            return result
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    return wrapper
 
 
 class MenuItem(Base):
@@ -35,7 +57,8 @@ class MenuItem(Base):
     order_by = Column(Integer, nullable=False)
 
     @classmethod
-    def get_menu_item_data(cls, session: Session, callback_value: str) -> dict:
+    @with_session
+    def get_menu_item_data(cls, callback_value: str, session: Session) -> dict:
         """
         Возвращает значения всех полей строки по значению callback.
         """
@@ -54,7 +77,8 @@ class MenuItem(Base):
             return None
 
     @classmethod
-    def get_menu_items_by_parent(cls, session: Session, parent_callback: str) -> list:
+    @with_session
+    def get_menu_items_by_parent(cls, parent_callback: str, session: Session) -> list:
         items = session.query(cls).filter_by(parent_menu=parent_callback).order_by(cls.order_by).all()
         # Возвращаем список словарей, каждый из которых представляет элемент меню
         return [{
@@ -67,16 +91,28 @@ class MenuItem(Base):
             'order_by': item.order_by
         } for item in items]
 
+    @classmethod
+    @with_session
+    def create_menu_item(cls, name: str, text: str, image_url: str, callback: str, parent_menu: str, order_by: int, session: Session):
+        """
+        Создает новый элемент меню и сохраняет его в базе данных.
+        """
+        new_item = cls(
+            name=name,
+            text=text,
+            image_url=image_url,
+            callback=callback,
+            parent_menu=parent_menu,
+            order_by=order_by
+        )
+        session.add(new_item)
+        session.commit()
+
+
 if __name__ == "__main__":
-    db = Database()
-    session = db.get_session()
-
-
-
-    # Получение элемента по значению callback
-    # item = MenuItem.get_menu_item_data(session, "menu")
-    item = MenuItem.get_menu_items_by_parent(session, "menu")
+    # Примеры использования
+    item = MenuItem.get_menu_item_data("menu")
     print(item)
 
-    # Закрытие сессии
-    db.close()
+    items = MenuItem.get_menu_items_by_parent("menu")
+    print(items)

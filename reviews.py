@@ -1,3 +1,4 @@
+
 # Нужно добавить 2 поля в таблицу 'dishes'
 # total_rating = Column(Integer, default=0)
 # rating_count = Column(Integer, default=0)

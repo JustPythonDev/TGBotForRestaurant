@@ -1,3 +1,4 @@
+
 # Нужно добавить в таблицу Order поле 'status = Column(String, nullable=False)'
 
 from telebot import TeleBot, types

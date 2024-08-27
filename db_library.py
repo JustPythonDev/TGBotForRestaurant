@@ -116,3 +116,28 @@ if __name__ == "__main__":
 
     items = MenuItem.get_menu_items_by_parent("menu")
     print(items)
+
+
+class Dishes(Base):
+    __tablename__ = 'dishes'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    description = Column(Text)
+    price = Column(Float, nullable=False)
+    image_url = Column(String)
+    dishes_category_id = Column(Integer, ForeignKey('dishes_categories.id'))
+
+    category = relationship("DishesCategories", backref="dishes")
+    cart_items = relationship("Cart", back_populates="dish")
+    reviews = relationship("Reviews", back_populates="dish")
+
+    @classmethod
+    def get_dishes_by_menu_callback(cls, session: Session, callback_value: str) -> list:
+        """
+        Возвращает список блюд, связанных с категорией, соответствующей значению callback.
+        """
+        category = session.query(DishesCategories).filter_by(menu_item_callback=callback_value).first()
+        if category:
+            return session.query(cls).filter_by(dishes_category_id=category.id).all()
+        return []

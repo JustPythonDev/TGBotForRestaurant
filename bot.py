@@ -4,7 +4,7 @@ import time
 import os
 
 from config import TELEGRAM_API_TOKEN
-from db_library import Database, MenuItem
+from db_library import MenuItems, Dishes
 
 
 # ВРЕМЕННО!!!
@@ -21,7 +21,7 @@ class Menu:
         markup = types.InlineKeyboardMarkup()
 
         # Получение элементов меню из базы данных
-        filtered_menu = MenuItem.get_menu_items_by_parent(parent_callback)
+        filtered_menu = MenuItems.get_menu_items_by_parent(parent_callback)
 
         for item in filtered_menu:
             button = types.InlineKeyboardButton(item["name"], callback_data=item["callback"])
@@ -40,7 +40,7 @@ class Menu:
 
     def item(self, callback):
         # Получение текста для меню на основе callback
-        item = MenuItem.get_menu_item_data(callback)
+        item = MenuItems.get_menu_item_data(callback)
         if item:
             return item
         return None
@@ -193,7 +193,8 @@ def send_new_message(user_id, image_url, msg_text, markup_keys=None, id=None):
 
 def view_category_dishes_menu(parent_callback, user_id):
     # Получаем список блюд из временной базы данных
-    dishes_list = temp_db.get_dishes_by_menu_callback(parent_callback)
+    dishes_list = Dishes.get_dishes_by_menu_callback(parent_callback)
+        # temp_db.get_dishes_by_menu_callback(parent_callback)
 
     # Если список блюд пуст, отправляем сообщение об этом
     if not dishes_list:

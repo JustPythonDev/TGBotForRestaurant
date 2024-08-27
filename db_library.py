@@ -45,7 +45,7 @@ def with_session(func):
     return wrapper
 
 
-class MenuItem(Base):
+class MenuItems(Base):
     __tablename__ = 'menu_items'
 
     id = Column(Integer, primary_key=True)
@@ -91,31 +91,30 @@ class MenuItem(Base):
             'order_by': item.order_by
         } for item in items]
 
-    @classmethod
-    @with_session
-    def create_menu_item(cls, name: str, text: str, image_url: str, callback: str, parent_menu: str, order_by: int, session: Session):
-        """
-        Создает новый элемент меню и сохраняет его в базе данных.
-        """
-        new_item = cls(
-            name=name,
-            text=text,
-            image_url=image_url,
-            callback=callback,
-            parent_menu=parent_menu,
-            order_by=order_by
-        )
-        session.add(new_item)
-        session.commit()
+    # @classmethod
+    # @with_session
+    # def create_menu_item(cls, name: str, text: str, image_url: str, callback: str, parent_menu: str, order_by: int, session: Session):
+    #     """
+    #     Создает новый элемент меню и сохраняет его в базе данных.
+    #     """
+    #     new_item = cls(
+    #         name=name,
+    #         text=text,
+    #         image_url=image_url,
+    #         callback=callback,
+    #         parent_menu=parent_menu,
+    #         order_by=order_by
+    #     )
+    #     session.add(new_item)
+    #     session.commit()
 
+class DishesCategories(Base):
+    __tablename__ = 'dishes_categories'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    menu_item_callback = Column(String, ForeignKey('menu_items.callback'))
 
-if __name__ == "__main__":
-    # Примеры использования
-    item = MenuItem.get_menu_item_data("menu")
-    print(item)
-
-    items = MenuItem.get_menu_items_by_parent("menu")
-    print(items)
+    menu_item = relationship("MenuItems", backref="dishes_categories")
 
 
 class Dishes(Base):
@@ -126,18 +125,41 @@ class Dishes(Base):
     description = Column(Text)
     price = Column(Float, nullable=False)
     image_url = Column(String)
-    dishes_category_id = Column(Integer, ForeignKey('dishes_categories.id'))
+    dishes_category = Column(Integer, ForeignKey('dishes_categories.menu_item_callback'))
 
     category = relationship("DishesCategories", backref="dishes")
-    cart_items = relationship("Cart", back_populates="dish")
-    reviews = relationship("Reviews", back_populates="dish")
+    # cart_items = relationship("Cart", back_populates="dish")
+    # reviews = relationship("Reviews", back_populates="dish")
 
     @classmethod
-    def get_dishes_by_menu_callback(cls, session: Session, callback_value: str) -> list:
+    @with_session
+    def get_dishes_by_menu_callback(cls, callback_value: str, session: Session) -> list:
         """
         Возвращает список блюд, связанных с категорией, соответствующей значению callback.
         """
-        category = session.query(DishesCategories).filter_by(menu_item_callback=callback_value).first()
-        if category:
-            return session.query(cls).filter_by(dishes_category_id=category.id).all()
-        return []
+        # category = session.query(cls).filter_by(menu_item_callback=callback_value).first()
+        # if category:
+        dishes = session.query(cls).filter_by(dishes_category=callback_value).order_by(cls.id).all()
+        return [{
+            'id': dish.id,
+            'name': dish.name,
+            'description': dish.description,
+            'price': dish.price,
+            'image_url': dish.image_url,
+            'dishes_category': dish.dishes_category
+        } for dish in dishes]
+        # return []
+
+
+
+
+if __name__ == "__main__":
+    # Примеры использования
+    item = MenuItems.get_menu_item_data("menu")
+    print(item)
+
+    items = MenuItems.get_menu_items_by_parent("menu")
+    print(items)
+
+    items = Dishes.get_dishes_by_menu_callback("appetizers")
+    print(items)

@@ -54,7 +54,8 @@ ON CONFLICT(name) DO NOTHING
 """, [
     ('Брускетта с чесноком', 'appetizers', 230.0, 'img/ap_bruschetta.jpg'),
     ('Оливки пряные', 'appetizers', 280.0, 'img/ap_olives.jpg'),
-    ('Креветки в темпуре', 'appetizers', 350.0, 'img/ap_shrimp_tempura.jpg')
+    ('Креветки в темпуре', 'appetizers', 350.0, 'img/ap_shrimp_tempura.jpg'),
+    ('Тартар из лосося', 'appetizers', 350.0, 'img/ap_tartar.jpg')
 ])
 
 # Сохраняем изменения

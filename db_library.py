@@ -76,7 +76,15 @@ class MenuItems(Base):
                 'order_by': item.order_by
             }
         else:
-            return None
+            return {
+                'id': None,
+                'name': None,
+                'text': None,
+                'image_url': None,
+                'callback': None,
+                'parent_menu': None,
+                'order_by': None
+            }
 
     @classmethod
     @with_session
@@ -93,22 +101,17 @@ class MenuItems(Base):
             'order_by': item.order_by
         } for item in items]
 
-    # @classmethod
-    # @with_session
-    # def create_menu_item(cls, name: str, text: str, image_url: str, callback: str, parent_menu: str, order_by: int, session: Session):
-    #     """
-    #     Создает новый элемент меню и сохраняет его в базе данных.
-    #     """
-    #     new_item = cls(
-    #         name=name,
-    #         text=text,
-    #         image_url=image_url,
-    #         callback=callback,
-    #         parent_menu=parent_menu,
-    #         order_by=order_by
-    #     )
-    #     session.add(new_item)
-    #     session.commit()
+    @classmethod
+    @with_session
+    def check_is_menu_callback(cls, callback_value: str, session: Session) -> dict:
+        """
+        Проверяет есть ли записи с таким callback
+        """
+        item = session.query(cls).filter_by(callback=callback_value).order_by(cls.order_by).first()
+        if item:
+            return True
+        else:
+            return False
 
 class DishesCategories(Base):
     __tablename__ = 'dishes_categories'
@@ -130,7 +133,7 @@ class Dishes(Base):
     dishes_category = Column(Integer, ForeignKey('dishes_categories.menu_item_callback'))
 
     category = relationship("DishesCategories", backref="dishes")
-    # cart_items = relationship("Cart", back_populates="dish")
+    cart_items = relationship("Cart", back_populates="dish")
     # reviews = relationship("Reviews", back_populates="dish")
 
     @classmethod
@@ -203,6 +206,46 @@ class Orders(Base):
         return result
 
 
+class Cart(Base):
+    __tablename__ = 'cart'
+    user_id = Column(Integer, primary_key=True)
+    dish_id = Column(Integer, ForeignKey('dishes.id'), primary_key=True)
+    quantity = Column(Integer, nullable=False)
+
+    dish = relationship("Dishes", back_populates="cart_items")
+
+    @classmethod
+    @with_session
+    def add_dish_to_cart(cls, user_id: int, dish_id: int, session: Session):
+        """Добавляет новую запись в корзину."""
+        quantity = 1
+        cart_item = session.query(cls).filter_by(user_id=user_id, dish_id=dish_id).first()
+
+        if cart_item:
+            cart_item.quantity += 1
+            return True
+        else:
+            new_cart_item = cls(user_id=user_id, dish_id=dish_id, quantity=quantity)
+            if new_cart_item:
+                session.add(new_cart_item)
+                return True
+        return False
+
+    @classmethod
+    @with_session
+    def remove_dish_from_cart(cls, user_id: int, dish_id: int, session: Session):
+        """Удаляет позицию из корзины."""
+        cart_item = session.query(cls).filter_by(user_id=user_id, dish_id=dish_id).first()
+
+        if cart_item:
+            if cart_item.quantity > 1:
+                cart_item.quantity -= 1
+            else:
+                session.delete(cart_item)
+            return True
+        return False
+
+
 if __name__ == "__main__":
     # Примеры использования
     # item = MenuItems.get_menu_item_data("menu")
@@ -213,5 +256,7 @@ if __name__ == "__main__":
     #
     # items = Dishes.get_dishes_by_menu_callback("appetizers")
     # print(items)
-    items = Orders.get_orders_by_user_id(1)
+    # items = Orders.get_orders_by_user_id(1)
+    # print(items)
+    items = Cart.remove_dish_from_cart(1, 1)
     print(items)

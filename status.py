@@ -12,3 +12,4 @@ def check_order_statuses(user_id):
         status_message = "У вас нет активных заказов на сегодня."
 
     return status_message
+

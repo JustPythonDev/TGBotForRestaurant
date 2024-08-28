@@ -194,7 +194,6 @@ def send_new_message(user_id, image_url, msg_text, markup_keys=None, id=None):
 def view_category_dishes_menu(parent_callback, user_id):
     # Получаем список блюд из временной базы данных
     dishes_list = Dishes.get_dishes_by_menu_callback(parent_callback)
-        # temp_db.get_dishes_by_menu_callback(parent_callback)
 
     # Если список блюд пуст, отправляем сообщение об этом
     if not dishes_list:

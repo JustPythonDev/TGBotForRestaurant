@@ -1,7 +1,7 @@
-from telebot import types
 from db_library import MenuItems, Dishes, Cart
 
 def dishes_menu_start(callback, user_id):
+    dish_messages = []
     if MenuItems.check_is_menu_callback(callback):
         dish_messages = view_category_dishes_menu(callback)
     elif callback.startswith("menu_order_"):
@@ -49,14 +49,14 @@ def add_dish_from_menu_to_cart(callback, user_id):
     if not status:
         return
     button = {'text': '✅', 'callback_data': f'menu_remove_{dish_id}'}
-    dish_messages = [{
+
+    return [{
         'message': None,
         'image_url': None,
         'markup': None,
         'button': button,
         'id': dish_id
     }]
-    return dish_messages
 
 def remove_dish_from_menu_from_cart(callback, user_id):
     dish_id = callback[len("menu_remove_")::]
@@ -65,11 +65,11 @@ def remove_dish_from_menu_from_cart(callback, user_id):
     if not status:
         return
     button = {'text': 'Выбрать', 'callback_data': f'menu_order_{dish_id}'}
-    dish_messages = [{
+
+    return [{
         'message': None,
         'image_url': None,
         'markup': None,
         'button': button,
         'id': dish_id
     }]
-    return dish_messages

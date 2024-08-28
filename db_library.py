@@ -153,7 +153,6 @@ class Dishes(Base):
             'image_url': dish.image_url,
             'dishes_category': dish.dishes_category
         } for dish in dishes]
-        # return []
 
 
 class Orders(Base):
@@ -197,6 +196,7 @@ class Orders(Base):
 
             # Формируем результат в виде списка словарей
             result.append({
+                'id': order.id,
                 'total_amount': order.total_amount,
                 'payment_status': order.payment_status,
                 'order_date': order.order_date,
@@ -256,7 +256,7 @@ if __name__ == "__main__":
     #
     # items = Dishes.get_dishes_by_menu_callback("appetizers")
     # print(items)
-    # items = Orders.get_orders_by_user_id(1)
-    # print(items)
-    items = Cart.remove_dish_from_cart(1, 1)
+    items = Orders.get_orders_by_user_id(1295753599)
     print(items)
+    # items = Cart.remove_dish_from_cart(1, 1)
+    # print(items)

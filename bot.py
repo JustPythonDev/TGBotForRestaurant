@@ -6,6 +6,7 @@ import os
 from config import TELEGRAM_API_TOKEN
 from db_library import MenuItems
 from dish_menu import dishes_menu_start
+from status import status_menu_start
 
 
 
@@ -17,23 +18,20 @@ class Menu:
         # Создание клавиатуры для текущего уровня меню
         markup = types.InlineKeyboardMarkup()
 
-        # Получение элементов меню из базы данных
-        filtered_menu = MenuItems.get_menu_items_by_parent(callback)
-
-        if not filtered_menu:
+        if not MenuItems.check_is_menu_callback(callback):
             return None
+
+        filtered_menu = MenuItems.get_menu_items_by_parent(callback)
 
         for item in filtered_menu:
             button = types.InlineKeyboardButton(item["name"], callback_data=item["callback"])
             markup.add(button)
 
-        # Если это не главное меню, добавляем кнопку для возврата
-        if callback is not None and callback != "start":
-            parent_of_parent = self.item(callback)['parent_menu']
+        parent_callback = self.item(callback)['parent_menu']
 
-            if parent_of_parent is None:
-                parent_of_parent = "start"
-            back_button = types.InlineKeyboardButton("↩️ Назад", callback_data="back_to_" + parent_of_parent)
+        # Если это не главное меню, добавляем кнопку для возврата
+        if parent_callback:
+            back_button = types.InlineKeyboardButton("↩️ Назад", callback_data="back_to_" + parent_callback)
             markup.add(back_button)
 
         return markup
@@ -43,7 +41,6 @@ class Menu:
         item = MenuItems.get_menu_item_data(callback)
         if item:
             return item
-        return {}
 
 
 class Messages:
@@ -127,8 +124,8 @@ def send_welcome(message):
 def handle_callback(call):
     if call.data.startswith("back_to_"):
         callback = call.data[len("back_to_"):]
-        if callback == "menu":
-            Messages.clear_chat_history(call.message.chat.id)
+        # if callback == "menu":
+        Messages.clear_chat_history(call.message.chat.id)
     else:
         callback = call.data
 
@@ -158,6 +155,8 @@ def process_menu(callback, message):
     # выбрали категорию пункта "Меню кафе" или находимся в ней
     if menu.item(callback)['parent_menu'] == 'menu' or callback.startswith("menu_"):
         messages = dishes_menu_start(callback, user_id)
+    elif callback.startswith("status"):
+        messages = status_menu_start(callback, user_id)
 
 
     if messages:

@@ -1,5 +1,7 @@
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Float, Text
-from sqlalchemy.orm import sessionmaker, scoped_session, declarative_base, Session, relationship
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, ForeignKey, Text
+from sqlalchemy.orm import relationship, sessionmaker, scoped_session, declarative_base, Session
+from datetime import datetime, timedelta
+
 from config import DATABASE_NAME
 
 # Базовый класс
@@ -151,6 +153,56 @@ class Dishes(Base):
         # return []
 
 
+class Orders(Base):
+    __tablename__ = 'orders'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    total_amount = Column(Float, nullable=False)
+    payment_status = Column(String, nullable=False)
+    delivery_address = Column(Text, nullable=False)
+    order_date = Column(DateTime, nullable=False)
+
+    user = relationship("Users", backref="orders")
+
+    @classmethod
+    @with_session
+    def get_orders_by_user_id(cls, user_id: int, session: Session) -> list:
+        """
+        Возвращает список заказов для пользователя user_id за текущий день с вычисляемым статусом заказа.
+
+        :param user_id: Идентификатор пользователя.
+        :param session: Текущая сессия базы данных.
+        :return: Список заказов с полями total_amount, payment_status, order_date, order_status.
+        """
+        # Устанавливаем начало сегодняшнего дня
+        today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+        # Получаем заказы для указанного пользователя, сделанные сегодня
+        orders = session.query(cls).filter_by(user_id=user_id).filter(cls.order_date >= today_start).all()
+
+        result = []
+        for order in orders:
+            # Вычисляем время, прошедшее с момента заказа
+            elapsed_time = datetime.now() - order.order_date
+
+            # Определяем статус заказа на основе времени
+            if elapsed_time < timedelta(minutes=30):
+                order_status = "в работе"
+            elif timedelta(minutes=30) <= elapsed_time < timedelta(hours=2):
+                order_status = "в пути"
+            else:
+                order_status = "доставлен"
+
+            # Формируем результат в виде списка словарей
+            result.append({
+                'total_amount': order.total_amount,
+                'payment_status': order.payment_status,
+                'order_date': order.order_date,
+                'order_status': order_status
+            })
+
+        return result
 
 
 if __name__ == "__main__":

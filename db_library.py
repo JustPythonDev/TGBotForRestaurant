@@ -163,8 +163,6 @@ class Orders(Base):
     delivery_address = Column(Text, nullable=False)
     order_date = Column(DateTime, nullable=False)
 
-    user = relationship("Users", backref="orders")
-
     @classmethod
     @with_session
     def get_orders_by_user_id(cls, user_id: int, session: Session) -> list:
@@ -207,11 +205,13 @@ class Orders(Base):
 
 if __name__ == "__main__":
     # Примеры использования
-    item = MenuItems.get_menu_item_data("menu")
-    print(item)
-
-    items = MenuItems.get_menu_items_by_parent("menu")
-    print(items)
-
-    items = Dishes.get_dishes_by_menu_callback("appetizers")
+    # item = MenuItems.get_menu_item_data("menu")
+    # print(item)
+    #
+    # items = MenuItems.get_menu_items_by_parent("menu")
+    # print(items)
+    #
+    # items = Dishes.get_dishes_by_menu_callback("appetizers")
+    # print(items)
+    items = Orders.get_orders_by_user_id(1)
     print(items)

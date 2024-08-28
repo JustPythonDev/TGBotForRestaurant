@@ -61,8 +61,8 @@ cur.execute("""
     user_id INTEGER,
     total_amount REAL NOT NULL,
     payment_status TEXT NOT NULL,
-    delivery_address TEXT NOT NULL,
-    order_date TEXT NOT NULL
+    delivery_address TEXT NULL,
+    order_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
 """)
 

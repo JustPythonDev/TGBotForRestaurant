@@ -75,14 +75,15 @@ class Messages:
             cls.sent_messages[user_id] = {}
 
     @classmethod
-    def send_new_message(cls, user_id, msg_text, image_url, markup_keys, button, id, old_message):
+    def send_new_message(cls, user_id, msg_text, image_url, markup_keys, buttons, id, old_message):
         """Отправка сообщения - только текст или текст/картинка + markup_keys
         Сохраняет ID сообщения, отправленного ботом, с привязкой к идентификатору"""
         try:
-            if not markup_keys and button:
+            if not markup_keys and buttons:
                 markup_keys = types.InlineKeyboardMarkup()
-                markup_button = types.InlineKeyboardButton(button["text"], callback_data=button["callback_data"])
-                markup_keys.add(markup_button)
+                for button in buttons:
+                    markup_button = types.InlineKeyboardButton(button["text"], callback_data=button["callback_data"])
+                    markup_keys.add(markup_button)
 
             if not msg_text and old_message and markup_keys: # нет текста - меняем только кнопки у старого сообщения
                 bot.edit_message_reply_markup(
@@ -162,7 +163,7 @@ def process_menu(callback, message):
     if messages:
         for msg in messages:
             Messages.send_new_message(user_id, msg['message'], msg['image_url'],
-                                      msg['markup'], msg['button'], msg['id'], message)
+                                      msg['markup'], msg['buttons'], msg['id'], message)
 
 def send_or_change_menu_msg(user_id, menu_text, menu_keys=None, image_url=None, old_msg=None):
     if image_url and os.path.isfile(image_url):

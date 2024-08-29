@@ -14,25 +14,25 @@ def view_cart_info(user_id):
     cart_messages = []
     # Если список блюд пуст, отправляем сообщение об этом
     if not dishes_list:
-        return dish_messages
+        return cart_messages
 
     for dish in dishes_list:
-        # Создаем разметку с кнопкой для каждого изображения
-        # markup = types.InlineKeyboardMarkup()
-        # button = types.InlineKeyboardButton(text=f"Выбрать", callback_data=f"menu_order_{dish['id']}")
-        # markup.add(button)
-        button = {'text': 'Выбрать', 'callback_data': f'menu_order_{dish['id']}'}
-
-        # Отправляем изображение с подписью и кнопкой
-        message = f"<b>{dish['name']}</b>\nЦена: {dish['price']} руб."
         image_url = dish['image_url']
-        dish_id = dish['id']
+        dish_id = dish['dish_id']
+
+        buttons = [
+                    {'text': '➕', 'callback_data': f'cart_add_{dish_id}'},
+                    {'text': '➕', 'callback_data': f'cart_add_{dish_id}'},
+                    {'text': '➖', 'callback_data': f'cart_reduce_{dish_id}'}
+                  ]
+
+        message = f"<b>{dish['name']}</b>\nЦена: {dish['price']} руб."
 
         cart_messages.append({
             'message': message,
             'image_url': image_url,
             'markup': None,
-            'button': button,
+            'buttons': buttons,
             'id': dish_id
         })
     return cart_messages

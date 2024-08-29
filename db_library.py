@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, ForeignKey, Text
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, ForeignKey, Text, func
 from sqlalchemy.orm import relationship, sessionmaker, scoped_session, declarative_base, Session
 from datetime import datetime, timedelta
 
@@ -159,7 +159,7 @@ class Orders(Base):
     __tablename__ = 'orders'
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_id = Column(Integer, nullable=False)
     total_amount = Column(Float, nullable=False)
     payment_status = Column(String, nullable=False)
     delivery_address = Column(Text, nullable=False)
@@ -205,6 +205,36 @@ class Orders(Base):
 
         return result
 
+    @classmethod
+    @with_session
+    def create_order_from_cart(cls, user_id: int, payment_status: str, delivery_address: str = "", session: Session = None) -> int:
+        """
+        Создает новый заказ на основе содержимого корзины пользователя и очищает корзину.
+        """
+        # Вычисляем общую сумму заказа
+        total = Cart.get_cart_total_amount(user_id)
+
+        if not total:
+            raise ValueError("Корзина пуста. Невозможно создать заказ.")
+
+        # Создаем новый заказ
+        new_order = cls(
+            user_id=user_id,
+            total_amount=total,
+            payment_status=payment_status,
+            delivery_address=None,
+            order_date=datetime.now()
+        )
+        session.add(new_order)
+        session.flush()  # Выполняем промежуточный коммит, чтобы получить order_id
+
+        # Получаем ID нового заказа
+        order_id = new_order.id
+
+        # Очищаем корзину после создания заказа
+        session.query(Cart).filter_by(user_id=user_id).delete()
+
+        return order_id
 
 class Cart(Base):
     __tablename__ = 'cart'
@@ -244,6 +274,17 @@ class Cart(Base):
                 session.delete(cart_item)
             return True
         return False
+    @classmethod
+    @with_session
+    def get_cart_total_amount(cls, user_id: int, session: Session) -> float:
+        """
+        Подсчитывает общую сумму заказа в корзине для данного пользователя.
+        """
+        total = session.query(
+            func.sum(Dishes.price * cls.quantity)
+        ).select_from(cls).join(Dishes, cls.dish_id == Dishes.id).filter(cls.user_id == user_id).scalar()
+
+        return total if total is not None else 0.0
 
 
 if __name__ == "__main__":
@@ -256,7 +297,7 @@ if __name__ == "__main__":
     #
     # items = Dishes.get_dishes_by_menu_callback("appetizers")
     # print(items)
-    items = Orders.get_orders_by_user_id(1295753599)
+    items = Orders.create_order_from_cart(1295753599, 'наличные')
     print(items)
     # items = Cart.remove_dish_from_cart(1, 1)
     # print(items)

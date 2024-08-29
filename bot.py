@@ -7,6 +7,7 @@ from config import TELEGRAM_API_TOKEN
 from db_library import MenuItems
 from dish_menu import dishes_menu_start
 from status import status_menu_start
+from cart import cart_menu_start
 
 
 
@@ -158,6 +159,8 @@ def process_menu(callback, message):
         messages = dishes_menu_start(callback, user_id)
     elif callback.startswith("status"):
         messages = status_menu_start(callback, user_id)
+    elif callback.startswith("cart"):
+        messages = cart_menu_start(callback, user_id)
 
 
     if messages:

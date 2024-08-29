@@ -18,7 +18,7 @@ def check_order_statuses(user_id):
         'message': status_message,
         'image_url': None,
         'markup': None,
-        'button': None,
+        'buttons': None,
         'id': None
     }]
 

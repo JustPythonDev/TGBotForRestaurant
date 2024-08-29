@@ -205,36 +205,7 @@ class Orders(Base):
 
         return result
 
-    @classmethod
-    @with_session
-    def create_order_from_cart(cls, user_id: int, payment_status: str, delivery_address: str = "", session: Session = None) -> int:
-        """
-        Создает новый заказ на основе содержимого корзины пользователя и очищает корзину.
-        """
-        # Вычисляем общую сумму заказа
-        total = Cart.get_cart_total_amount(user_id)
 
-        if not total:
-            raise ValueError("Корзина пуста. Невозможно создать заказ.")
-
-        # Создаем новый заказ
-        new_order = cls(
-            user_id=user_id,
-            total_amount=total,
-            payment_status=payment_status,
-            delivery_address=None,
-            order_date=datetime.now()
-        )
-        session.add(new_order)
-        session.flush()  # Выполняем промежуточный коммит, чтобы получить order_id
-
-        # Получаем ID нового заказа
-        order_id = new_order.id
-
-        # Очищаем корзину после создания заказа
-        session.query(Cart).filter_by(user_id=user_id).delete()
-
-        return order_id
 
 class Cart(Base):
     __tablename__ = 'cart'
@@ -253,13 +224,13 @@ class Cart(Base):
 
         if cart_item:
             cart_item.quantity += 1
-            return True
+            return cart_item.quantity
         else:
             new_cart_item = cls(user_id=user_id, dish_id=dish_id, quantity=quantity)
             if new_cart_item:
                 session.add(new_cart_item)
-                return True
-        return False
+                return new_cart_item.quantity
+        return 0
 
     @classmethod
     @with_session
@@ -282,10 +253,11 @@ class Cart(Base):
         if cart_item:
             if cart_item.quantity > 1:
                 cart_item.quantity -= 1
+                return cart_item.quantity
             else:
                 session.delete(cart_item)
-            return True
-        return False
+                return 0
+        return None
 
 
     @classmethod
@@ -308,6 +280,7 @@ class Cart(Base):
         """
         # Запрос на получение данных о блюдах в корзине
         cart_items = session.query(
+            Dishes.id,
             Dishes.name,
             Dishes.image_url,
             Dishes.price,
@@ -318,6 +291,7 @@ class Cart(Base):
         # Формируем список словарей с нужной информацией
         return [
             {
+                'dish_id': item.id,
                 'name': item.name,
                 'image_url': item.image_url,
                 'price': item.price,
@@ -337,6 +311,36 @@ class Cart(Base):
         cart_item = session.query(cls).filter_by(user_id=user_id, dish_id=dish_id).first()
         return cart_item is not None
 
+    @classmethod
+    @with_session
+    def create_order_from_cart(cls, user_id: int, payment_status: str, delivery_address: str = "", session: Session = None) -> int:
+        """
+        Создает новый заказ на основе содержимого корзины пользователя и очищает корзину.
+        """
+        # Вычисляем общую сумму заказа
+        total = cls.get_cart_total_amount(user_id)
+
+        if not total:
+            raise ValueError("Корзина пуста. Невозможно создать заказ.")
+
+        # Создаем новый заказ
+        new_order = Orders(
+            user_id=user_id,
+            total_amount=total,
+            payment_status=payment_status,
+            delivery_address=delivery_address,
+            order_date=datetime.now()
+        )
+        session.add(new_order)
+        session.flush()  # Выполняем промежуточный коммит, чтобы получить order_id
+
+        # Получаем ID нового заказа
+        order_id = new_order.id
+
+        # Очищаем корзину после создания заказа
+        session.query(cls).filter_by(user_id=user_id).delete()
+
+        return order_id
 
 if __name__ == "__main__":
     # Примеры использования

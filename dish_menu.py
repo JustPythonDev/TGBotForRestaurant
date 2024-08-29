@@ -24,9 +24,9 @@ def view_category_dishes_menu(callback, user_id):
         dish_id = dish['id']
 
         if Cart.check_is_dish_in_cart(user_id, dish_id):
-            buttons = {'text': '✅', 'callback_data': f'menu_remove_{dish_id}'}
+            buttons = [{'text': '✅', 'callback_data': f'menu_remove_{dish_id}'}]
         else:
-            buttons = {'text': 'Выбрать', 'callback_data': f'menu_order_{dish_id}'}
+            buttons = [{'text': 'Выбрать', 'callback_data': f'menu_order_{dish_id}'}]
 
         # Отправляем изображение с подписью и кнопкой
         message = f"<b>{dish['name']}</b>\nЦена: {dish['price']} руб."
@@ -44,10 +44,25 @@ def view_category_dishes_menu(callback, user_id):
 
 def add_dish_from_menu_to_cart(callback, user_id):
     dish_id = callback[len("menu_order_")::]
-    status = Cart.add_dish_to_cart(user_id, dish_id)
-    if not status:
+    quantity = Cart.add_dish_to_cart(user_id, dish_id)
+    if quantity == 0:
         return
-    buttons = {'text': '✅', 'callback_data': f'menu_remove_{dish_id}'}
+    buttons = [{'text': '✅', 'callback_data': f'menu_remove_{dish_id}'}]
+
+    return [{
+        'message': None,
+        'image_url': None,
+        'markup': None,
+        'buttons': buttons,
+        'id': dish_id
+    }]
+
+def add_dish_from_menu_to_cart(callback, user_id):
+    dish_id = callback[len("menu_order_")::]
+    quantity = Cart.add_dish_to_cart(user_id, dish_id)
+    if quantity == 0:
+        return
+    buttons = [{'text': '✅', 'callback_data': f'menu_remove_{dish_id}'}]
 
     return [{
         'message': None,
@@ -62,7 +77,7 @@ def remove_dish_from_menu_from_cart(callback, user_id):
     status = Cart.remove_dish_from_cart(user_id, dish_id)
     if not status:
         return
-    buttons = {'text': 'Выбрать', 'callback_data': f'menu_order_{dish_id}'}
+    buttons = [{'text': 'Выбрать', 'callback_data': f'menu_order_{dish_id}'}]
 
     return [{
         'message': None,

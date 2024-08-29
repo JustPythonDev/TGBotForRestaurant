@@ -321,7 +321,7 @@ class Cart(Base):
         total = cls.get_cart_total_amount(user_id)
 
         if not total:
-            raise ValueError("Корзина пуста. Невозможно создать заказ.")
+            return None
 
         # Создаем новый заказ
         new_order = Orders(

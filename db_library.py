@@ -103,7 +103,7 @@ class MenuItems(Base):
 
     @classmethod
     @with_session
-    def check_is_menu_callback(cls, callback_value: str, session: Session) -> dict:
+    def check_is_menu_callback(cls, callback_value: str, session: Session) -> bool:
         """
         Проверяет есть ли записи с таким callback
         """
@@ -268,12 +268,26 @@ class Cart(Base):
         cart_item = session.query(cls).filter_by(user_id=user_id, dish_id=dish_id).first()
 
         if cart_item:
+            session.delete(cart_item)
+            return True
+        return False
+
+
+    @classmethod
+    @with_session
+    def decrement_dish_quantity(cls, user_id: int, dish_id: int, session: Session):
+        """Удаляет позицию из корзины."""
+        cart_item = session.query(cls).filter_by(user_id=user_id, dish_id=dish_id).first()
+
+        if cart_item:
             if cart_item.quantity > 1:
                 cart_item.quantity -= 1
             else:
                 session.delete(cart_item)
             return True
         return False
+
+
     @classmethod
     @with_session
     def get_cart_total_amount(cls, user_id: int, session: Session) -> float:
@@ -313,7 +327,15 @@ class Cart(Base):
             for item in cart_items
         ]
 
-
+    @classmethod
+    @with_session
+    def check_is_dish_in_cart(cls, user_id: int, dish_id: int, session: Session) -> bool:
+        """
+        Проверяет, есть ли конкретное блюдо в корзине пользователя.
+        """
+        # Проверяем, есть ли блюдо в корзине пользователя
+        cart_item = session.query(cls).filter_by(user_id=user_id, dish_id=dish_id).first()
+        return cart_item is not None
 
 
 if __name__ == "__main__":
@@ -326,7 +348,7 @@ if __name__ == "__main__":
     #
     # items = Dishes.get_dishes_by_menu_callback("appetizers")
     # print(items)
-    items = Cart.get_cart_dishes(1295753599)
+    items = Cart.check_is_dish_in_cart(1295753599, 2)
     print(items)
     # items = Cart.remove_dish_from_cart(1, 1)
     # print(items)

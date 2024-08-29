@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, ForeignKey, Text
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, ForeignKey, Text, func
 from sqlalchemy.orm import relationship, sessionmaker, scoped_session, declarative_base, Session
 from datetime import datetime, timedelta
 
@@ -103,7 +103,7 @@ class MenuItems(Base):
 
     @classmethod
     @with_session
-    def check_is_menu_callback(cls, callback_value: str, session: Session) -> dict:
+    def check_is_menu_callback(cls, callback_value: str, session: Session) -> bool:
         """
         Проверяет есть ли записи с таким callback
         """
@@ -159,7 +159,7 @@ class Orders(Base):
     __tablename__ = 'orders'
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_id = Column(Integer, nullable=False)
     total_amount = Column(Float, nullable=False)
     payment_status = Column(String, nullable=False)
     delivery_address = Column(Text, nullable=False)
@@ -206,6 +206,7 @@ class Orders(Base):
         return result
 
 
+
 class Cart(Base):
     __tablename__ = 'cart'
     user_id = Column(Integer, primary_key=True)
@@ -223,13 +224,13 @@ class Cart(Base):
 
         if cart_item:
             cart_item.quantity += 1
-            return True
+            return cart_item.quantity
         else:
             new_cart_item = cls(user_id=user_id, dish_id=dish_id, quantity=quantity)
             if new_cart_item:
                 session.add(new_cart_item)
-                return True
-        return False
+                return new_cart_item.quantity
+        return 0
 
     @classmethod
     @with_session
@@ -238,13 +239,108 @@ class Cart(Base):
         cart_item = session.query(cls).filter_by(user_id=user_id, dish_id=dish_id).first()
 
         if cart_item:
-            if cart_item.quantity > 1:
-                cart_item.quantity -= 1
-            else:
-                session.delete(cart_item)
+            session.delete(cart_item)
             return True
         return False
 
+
+    @classmethod
+    @with_session
+    def decrement_dish_quantity(cls, user_id: int, dish_id: int, session: Session):
+        """Удаляет позицию из корзины."""
+        cart_item = session.query(cls).filter_by(user_id=user_id, dish_id=dish_id).first()
+
+        if cart_item:
+            if cart_item.quantity > 1:
+                cart_item.quantity -= 1
+                return cart_item.quantity
+            else:
+                session.delete(cart_item)
+                return 0
+        return None
+
+
+    @classmethod
+    @with_session
+    def get_cart_total_amount(cls, user_id: int, session: Session) -> float:
+        """
+        Подсчитывает общую сумму заказа в корзине для данного пользователя.
+        """
+        total = session.query(
+            func.sum(Dishes.price * cls.quantity)
+        ).select_from(cls).join(Dishes, cls.dish_id == Dishes.id).filter(cls.user_id == user_id).scalar()
+
+        return total if total is not None else 0.0
+
+    @classmethod
+    @with_session
+    def get_cart_dishes(cls, user_id: int, session: Session) -> list:
+        """
+        Возвращает информацию обо всех товарах в корзине для данного пользователя.
+        """
+        # Запрос на получение данных о блюдах в корзине
+        cart_items = session.query(
+            Dishes.id,
+            Dishes.name,
+            Dishes.image_url,
+            Dishes.price,
+            cls.quantity,
+            (Dishes.price * cls.quantity).label('dish_total')
+        ).join(Dishes, cls.dish_id == Dishes.id).filter(cls.user_id == user_id).all()
+
+        # Формируем список словарей с нужной информацией
+        return [
+            {
+                'dish_id': item.id,
+                'name': item.name,
+                'image_url': item.image_url,
+                'price': item.price,
+                'quantity': item.quantity,
+                'dish_total': item.dish_total
+            }
+            for item in cart_items
+        ]
+
+    @classmethod
+    @with_session
+    def check_is_dish_in_cart(cls, user_id: int, dish_id: int, session: Session) -> bool:
+        """
+        Проверяет, есть ли конкретное блюдо в корзине пользователя.
+        """
+        # Проверяем, есть ли блюдо в корзине пользователя
+        cart_item = session.query(cls).filter_by(user_id=user_id, dish_id=dish_id).first()
+        return cart_item is not None
+
+    @classmethod
+    @with_session
+    def create_order_from_cart(cls, user_id: int, payment_status: str, delivery_address: str = "", session: Session = None) -> int:
+        """
+        Создает новый заказ на основе содержимого корзины пользователя и очищает корзину.
+        """
+        # Вычисляем общую сумму заказа
+        total = cls.get_cart_total_amount(user_id)
+
+        if not total:
+            raise ValueError("Корзина пуста. Невозможно создать заказ.")
+
+        # Создаем новый заказ
+        new_order = Orders(
+            user_id=user_id,
+            total_amount=total,
+            payment_status=payment_status,
+            delivery_address=delivery_address,
+            order_date=datetime.now()
+        )
+        session.add(new_order)
+        session.flush()  # Выполняем промежуточный коммит, чтобы получить order_id
+
+        # Получаем ID нового заказа
+        order_id = new_order.id
+
+        # Очищаем корзину после создания заказа
+        session.query(cls).filter_by(user_id=user_id).delete()
+
+        return order_id
 
 if __name__ == "__main__":
     # Примеры использования
@@ -256,7 +352,7 @@ if __name__ == "__main__":
     #
     # items = Dishes.get_dishes_by_menu_callback("appetizers")
     # print(items)
-    items = Orders.get_orders_by_user_id(1295753599)
+    items = Cart.check_is_dish_in_cart(1295753599, 2)
     print(items)
     # items = Cart.remove_dish_from_cart(1, 1)
     # print(items)

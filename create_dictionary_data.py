@@ -46,17 +46,56 @@ ON CONFLICT(menu_item_callback) DO NOTHING
     ('Напитки', 'drinks')
 ])
 
-
 cur.executemany("""
 INSERT INTO dishes (name, dishes_category, price, image_url)
 VALUES (?, ?, ?, ?)
 ON CONFLICT(name) DO NOTHING
 """, [
-    ('Брускетта с чесноком', 'appetizers', 230.0, 'img/ap_bruschetta.jpg'),
-    ('Оливки пряные', 'appetizers', 280.0, 'img/ap_olives.jpg'),
-    ('Креветки в темпуре', 'appetizers', 350.0, 'img/ap_shrimp_tempura.jpg'),
-    ('Тартар из лосося', 'appetizers', 350.0, 'img/ap_tartar.jpg')
+    # Закуски
+    ('Чесночные крутоны', 'appetizers', 230.0, 'img/ap_bruschetta.jpg'),
+    ('Пряные оливки', 'appetizers', 280.0, 'img/ap_olives.jpg'),
+    ('Хрустящие креветки', 'appetizers', 350.0, 'img/ap_shrimp_tempura.jpg'),
+    ('Тартар из северного лосося', 'appetizers', 350.0, 'img/ap_tartar.jpg'),
+    ('Итальянское капризе', 'appetizers', 200.0, 'img/ap_caprese.jpg'),
+
+    # Супы
+    ('Традиционный борщ', 'soups', 300.0, 'img/soup_borscht.jpg'),
+    ('Огненный Том Ям', 'soups', 400.0, 'img/soup_tomyam.jpg'),
+    ('Домашний куриный суп', 'soups', 250.0, 'img/soup_chicken.jpg'),
+    ('Мисо на закате', 'soups', 350.0, 'img/soup_miso.jpg'),
+
+    # Салаты
+    ('Классический Цезарь', 'salads', 350.0, 'img/salad_caesar.jpg'),
+    ('Солнечный греческий', 'salads', 300.0, 'img/salad_greek.jpg'),
+    ('Тунец на зелёной волне', 'salads', 320.0, 'img/salad_tuna.jpg'),
+    ('Креветки в авокадо', 'salads', 350.0, 'img/salad_avocado_shrimp.jpg'),
+    ('Киноа-праздник', 'salads', 330.0, 'img/salad_quinoa.jpg'),
+
+    # Основные блюда
+    ('Рибай-гриль', 'main_dishes', 1200.0, 'img/main_steak.jpg'),
+    ('Карбонара по-домашнему', 'main_dishes', 450.0, 'img/main_pasta.jpg'),
+    ('Рыба в огне', 'main_dishes', 600.0, 'img/main_grilled_fish.jpg'),
+    ('Пельмешки бабушки', 'main_dishes', 400.0, 'img/main_dumplings.jpg'),
+    ('Курица в золотой корочке', 'main_dishes', 550.0, 'img/main_roasted_chicken.jpg'),
+
+    # Десерты
+    ('Тирамису мечты', 'desserts', 300.0, 'img/dessert_tiramisu.jpg'),
+    ('Нежный чизкейк', 'desserts', 350.0, 'img/dessert_cheesecake.jpg'),
+    ('Шоколадные эклеры', 'desserts', 250.0, 'img/dessert_eclair.jpg'),
+    ('Торт "Сладкая ночь"', 'desserts', 400.0, 'img/dessert_choco_cake.jpg'),
+    ('Радужные макароны', 'desserts', 280.0, 'img/dessert_macarons.jpg'),
+
+    # Напитки
+    ('Эспрессо бодрости', 'drinks', 150.0, 'img/drink_coffee.jpg'),
+    ('Чай "Утренний рассвет"', 'drinks', 100.0, 'img/drink_tea.jpg'),
+    ('Фреш из солнечных апельсинов', 'drinks', 120.0, 'img/drink_orange_juice.jpg'),
+    ('Ледяная горная вода', 'drinks', 80.0, 'img/drink_water.jpg'),
+    ('Домашний лимонад', 'drinks', 140.0, 'img/drink_lemonade.jpg'),
 ])
+
+# Сохраняем изменения
+conn.commit()
+conn.close()
 
 # Сохраняем изменения
 conn.commit()

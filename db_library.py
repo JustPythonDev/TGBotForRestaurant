@@ -286,6 +286,35 @@ class Cart(Base):
 
         return total if total is not None else 0.0
 
+    @classmethod
+    @with_session
+    def get_cart_dishes(cls, user_id: int, session: Session) -> list:
+        """
+        Возвращает информацию обо всех товарах в корзине для данного пользователя.
+        """
+        # Запрос на получение данных о блюдах в корзине
+        cart_items = session.query(
+            Dishes.name,
+            Dishes.image_url,
+            Dishes.price,
+            cls.quantity,
+            (Dishes.price * cls.quantity).label('dish_total')
+        ).join(Dishes, cls.dish_id == Dishes.id).filter(cls.user_id == user_id).all()
+
+        # Формируем список словарей с нужной информацией
+        return [
+            {
+                'name': item.name,
+                'image_url': item.image_url,
+                'price': item.price,
+                'quantity': item.quantity,
+                'dish_total': item.dish_total
+            }
+            for item in cart_items
+        ]
+
+
+
 
 if __name__ == "__main__":
     # Примеры использования
@@ -297,7 +326,7 @@ if __name__ == "__main__":
     #
     # items = Dishes.get_dishes_by_menu_callback("appetizers")
     # print(items)
-    items = Orders.create_order_from_cart(1295753599, 'наличные')
+    items = Cart.get_cart_dishes(1295753599)
     print(items)
     # items = Cart.remove_dish_from_cart(1, 1)
     # print(items)

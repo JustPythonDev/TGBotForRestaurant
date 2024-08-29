@@ -1,4 +1,4 @@
-ef payment_menu_start(callback, user_id):
+def payment_menu_start(callback, user_id):
     if callback == 'payment':
         return view_payment_data(user_id)
     elif callback.startswith("payment_cash"):

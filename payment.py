@@ -78,4 +78,3 @@ def handle_payment(user_id, payment_method):
 
  finally:
   session.close()
-

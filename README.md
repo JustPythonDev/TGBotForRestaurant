@@ -52,3 +52,4 @@ cart.py - Корзина<br>
 dish_menu.py – Меню кафе<br>
 payment.py - Оплата<br>
 status.py – Статус заказа<br>
+review.py – Рейтинг<br>

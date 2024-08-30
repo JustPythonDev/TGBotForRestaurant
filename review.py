@@ -27,7 +27,7 @@ def view_reviews(user_id):
     if rating == 0:
         # buttons = [{'text': 'Оставить первый отзыв', 'callback_data': 'set_review'}]
         review_messages.append({
-            'message': 'Пока у нас нет отзывов о ресторане. Ваш отзыв может стать первым!',
+            'message': 'Пока у нас нет отзывов о кафе. Ваш отзыв может стать первым!',
             'image_url': None,
             'markup': None,
             'buttons': None,
@@ -35,7 +35,7 @@ def view_reviews(user_id):
         })
     else:
         review_messages.append({
-            'message': f'Пользователи оценили наш ресторан в среднем на {rating} баллов из 5',
+            'message': f'Пользователи оценили наше кафе в среднем на {rating} баллов из 5',
             'image_url': None,
             'markup': None,
             'buttons': None,
@@ -53,7 +53,7 @@ def set_review(user_id):
         {'text': '⭐️', 'callback_data': 'create_review_1'}
     ]
     review_messages.append({
-        'message': 'Укажите оценку ресторана от 1 до 5',
+        'message': 'Укажите оценку заведения от 1 до 5',
         'image_url': None,
         'markup': None,
         'buttons': buttons,

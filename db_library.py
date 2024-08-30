@@ -1,6 +1,8 @@
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, ForeignKey, Text, func
 from sqlalchemy.orm import relationship, sessionmaker, scoped_session, declarative_base, Session
 from datetime import datetime, timedelta
+from sqlalchemy import CheckConstraint
+
 
 from config import DATABASE_NAME
 
@@ -341,6 +343,48 @@ class Cart(Base):
         session.query(cls).filter_by(user_id=user_id).delete()
 
         return order_id
+
+    class Reviews(Base):
+        __tablename__ = 'reviews'
+
+        id = Column(Integer, primary_key=True)
+        user_id = Column(Integer, nullable=False)
+        dish_id = Column(Integer, ForeignKey('dishes.id'), nullable=False)
+        review_text = Column(Text, nullable=True)
+        rating = Column(Integer, CheckConstraint('rating >= 1 AND rating <= 5'), nullable=False)
+        review_date = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+        dish = relationship("Dishes", back_populates="reviews")
+
+        @classmethod
+        @with_session
+        def create_review(cls, user_id: int, dish_id: int, rating: int, review_text: str = None,
+                          session: Session = None):
+            """
+            Создает новый отзыв в базе данных.
+            :param user_id: Идентификатор пользователя
+            :param dish_id: Идентификатор блюда
+            :param rating: Рейтинг (от 1 до 5)
+            :param review_text: Текст отзыва (опционально)
+            :param session: Текущая сессия базы данных.
+            :return: ID созданного отзыва
+            """
+            new_review = cls(user_id=user_id, dish_id=dish_id, rating=rating, review_text=review_text)
+            session.add(new_review)
+            return new_review.id  # Возвращаем идентификатор нового отзыва
+
+        @classmethod
+        @with_session
+        def get_review_stats(cls, session: Session = None) -> float:
+            """
+            Возвращает средний рейтинг по всем записям.
+            Если отзывов нет, возвращает 0.
+            :param session: Текущая сессия базы данных.
+            :return: Средний рейтинг или 0
+            """
+            avg_rating = session.query(func.avg(cls.rating)).scalar()
+            return avg_rating if avg_rating is not None else 0.0
+
 
 if __name__ == "__main__":
     # Примеры использования

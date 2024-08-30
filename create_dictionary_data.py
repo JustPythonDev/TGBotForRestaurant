@@ -83,7 +83,7 @@ ON CONFLICT(name) DO NOTHING
     ('Нежный чизкейк', 'desserts', 350.0, 'img/dessert_cheesecake.jpg'),
     ('Шоколадные эклеры', 'desserts', 250.0, 'img/dessert_eclair.jpg'),
     ('Торт "Сладкая ночь"', 'desserts', 400.0, 'img/dessert_choco_cake.jpg'),
-    ('Радужные макароны', 'desserts', 280.0, 'img/dessert_macarons.jpg'),
+    ('Радужные макаруны', 'desserts', 280.0, 'img/dessert_macarons.jpg'),
 
     # Напитки
     ('Эспрессо бодрости', 'drinks', 150.0, 'img/drink_coffee.jpg'),

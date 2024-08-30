@@ -56,7 +56,7 @@ ON CONFLICT(name) DO NOTHING
     ('Пряные оливки', 'appetizers', 280.0, 'img/ap_olives.jpg'),
     ('Хрустящие креветки', 'appetizers', 350.0, 'img/ap_shrimp_tempura.jpg'),
     ('Тартар из северного лосося', 'appetizers', 350.0, 'img/ap_tartar.jpg'),
-    ('Итальянское капризе', 'appetizers', 200.0, 'img/ap_caprese.jpg'),
+    ('Итальянское капрезе', 'appetizers', 200.0, 'img/ap_caprese.jpg'),
 
     # Супы
     ('Традиционный борщ', 'soups', 300.0, 'img/soup_borscht.jpg'),

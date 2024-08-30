@@ -9,6 +9,7 @@ from dish_menu import dishes_menu_start
 from status import status_menu_start
 from cart import cart_menu_start
 from payment import payment_menu_start
+from review import review_menu_start
 
 
 class Menu:
@@ -163,6 +164,8 @@ def process_menu(callback, message):
         messages = cart_menu_start(callback, user_id)
     elif callback.startswith("payment"):
         messages = payment_menu_start(callback, user_id)
+    elif 'review' in callback:
+        messages = review_menu_start(callback, user_id)
 
 
     if messages:

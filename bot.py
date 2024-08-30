@@ -190,8 +190,8 @@ def send_or_change_menu_msg(user_id, menu_text, menu_keys=None, image_url=None, 
                     reply_markup=menu_keys
                 )
             else:
-                bot.send_message(user_id, text=menu_text, reply_markup=menu_keys)
                 bot.delete_message(chat_id=user_id, message_id=old_msg.message_id)
+                bot.send_message(user_id, text=menu_text, reply_markup=menu_keys)
 
         elif image_media:
             with open(image_url, 'rb') as photo:

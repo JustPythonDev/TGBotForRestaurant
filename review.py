@@ -25,12 +25,12 @@ def view_reviews(user_id):
 
     review_messages = []
     if rating == 0:
-        buttons = [{'text': 'Оставить первый отзыв', 'callback_data': 'set_review'}]
+        # buttons = [{'text': 'Оставить первый отзыв', 'callback_data': 'set_review'}]
         review_messages.append({
             'message': 'Пока у нас нет отзывов о ресторане. Ваш отзыв может стать первым!',
             'image_url': None,
             'markup': None,
-            'buttons': buttons,
+            'buttons': None,
             'id': None
         })
     else:

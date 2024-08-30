@@ -352,13 +352,13 @@ class Cart(Base):
         dish_id = Column(Integer, ForeignKey('dishes.id'), nullable=False)
         review_text = Column(Text, nullable=True)
         rating = Column(Integer, CheckConstraint('rating >= 1 AND rating <= 5'), nullable=False)
-        review_date = Column(DateTime, default=datetime.utcnow, nullable=False)
+        review_date = Column(DateTime, default=datetime.now, nullable=False)
 
         dish = relationship("Dishes", back_populates="reviews")
 
         @classmethod
         @with_session
-        def create_review(cls, user_id: int, dish_id: int, rating: int, review_text: str = None,
+        def create_review(cls, user_id: int, rating: int, dish_id: int = None, review_text: str = None,
                           session: Session = None):
             """
             Создает новый отзыв в базе данных.
@@ -379,8 +379,6 @@ class Cart(Base):
             """
             Возвращает средний рейтинг по всем записям.
             Если отзывов нет, возвращает 0.
-            :param session: Текущая сессия базы данных.
-            :return: Средний рейтинг или 0
             """
             avg_rating = session.query(func.avg(cls.rating)).scalar()
             return avg_rating if avg_rating is not None else 0.0

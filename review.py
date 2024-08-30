@@ -1,6 +1,4 @@
-# временно! ----------------------
-# from db_library import Review
-# ---------------------
+from db_library import Reviews
 
 # Метод 'create_review(rating)'
 # Создает новый отзыв, принимает user_id и rating
@@ -23,10 +21,8 @@ def review_menu_start(callback, user_id):
 
 def view_reviews(user_id):
     # Получаем средний рейтинг по всем отзывам в БД
-    # временно! ----------------------
-    # rating = Review.get_review_stats()
-    rating = 0
-    # -----------------------
+    rating = Reviews.get_review_stats()
+
     review_messages = []
     if rating == 0:
         buttons = [{'text': 'Оставить первый отзыв', 'callback_data': 'set_review'}]
@@ -68,9 +64,9 @@ def set_review(user_id):
 # Отправляем оценку в БД
 def create_review(callback, user_id):
     rating = callback[len("create_review_")::]
-    # временно! ----------------------
-    # Review.create_review(user_id, rating)
-    # -----------------------
+
+    Reviews.create_review(user_id, rating)
+
 
     return [{
         'message': "Спасибо, ваш отзыв принят",

@@ -46,11 +46,11 @@ def view_reviews(user_id):
 def set_review(user_id):
     review_messages = []
     buttons = [
-        {'text': '⭐️', 'callback_data': 'create_review_1'},
-        {'text': '⭐️⭐️', 'callback_data': 'create_review_2'},
-        {'text': '⭐️⭐️⭐️', 'callback_data': 'create_review_3'},
+        {'text': '⭐️⭐️⭐️⭐️⭐️', 'callback_data': 'create_review_5'},
         {'text': '⭐️⭐️⭐️⭐️', 'callback_data': 'create_review_4'},
-        {'text': '⭐️⭐️⭐️⭐️⭐️', 'callback_data': 'create_review_5'}
+        {'text': '⭐️⭐️⭐️', 'callback_data': 'create_review_3'},
+        {'text': '⭐️⭐️', 'callback_data': 'create_review_2'},
+        {'text': '⭐️', 'callback_data': 'create_review_1'}
     ]
     review_messages.append({
         'message': 'Укажите оценку ресторана от 1 до 5',

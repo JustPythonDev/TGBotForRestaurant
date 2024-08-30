@@ -375,7 +375,7 @@ class Reviews(Base):
         Если отзывов нет, возвращает 0.
         """
         avg_rating = session.query(func.avg(cls.rating)).scalar()
-        return avg_rating if avg_rating is not None else 0.0
+        return round(avg_rating, 2) if avg_rating is not None else 0.0
 
 
 if __name__ == "__main__":

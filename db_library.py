@@ -135,7 +135,7 @@ class Dishes(Base):
 
     category = relationship("DishesCategories", backref="dishes")
     cart_items = relationship("Cart", back_populates="dish")
-    # reviews = relationship("Reviews", back_populates="dish")
+    reviews = relationship("Reviews", back_populates="dish")
 
     @classmethod
     @with_session

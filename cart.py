@@ -60,9 +60,9 @@ def increase_dish_in_cart(callback, user_id):
         return
 
     buttons = [
-        {'text': '➕', 'callback_data': f'cart_add_{dish_id}'},
+        {'text': '🔺➕', 'callback_data': f'cart_add_{dish_id}'},
         {'text': quantity, 'callback_data': f'cart_q_{dish_id}'},
-        {'text': '➖', 'callback_data': f'cart_reduce_{dish_id}'}
+        {'text': '🔻➖', 'callback_data': f'cart_reduce_{dish_id}'}
     ]
 
     cart_messages = [{

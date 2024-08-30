@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 
-DATABASE_NAME = '.data/food_ordering_system.db'
+DATABASE_NAME = 'data/food_ordering_system.db'
 
 # Загружаем переменные окружения из .env файла
 load_dotenv()

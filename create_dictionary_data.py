@@ -29,7 +29,7 @@ ON CONFLICT(callback) DO NOTHING
     ('Напитки', 'Выберите напиток', 'drinks', 'menu', 6, 'img/drinks.jpg'),
 
     ('Оценить кафе', 'Поставьте вашу оценку', 'set_review', 'feedback', 1, 'img/cafe_evaluation.jpg'),
-    ('Просмотреть рейтинг', 'Общий рейтинг', 'view_reviews', 'feedback', 2, 'img/cafe_evaluation.jpg')
+    ('Просмотреть рейтинг', 'Общий рейтинг', 'view_reviews', 'feedback', 2, 'img/rating_view.jpg')
 ])
 
 # Вставляем данные в таблицу dishes_categories
